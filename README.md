@@ -39,30 +39,41 @@ npm run dev
 
 Vite 개발 서버는 `/api` 요청을 `http://localhost:8080`의 백엔드로 전달합니다. 체크리스트 생성을 사용하려면 PostgreSQL을 준비하고 백엔드를 먼저 실행해야 합니다.
 
-## Docker로 실행
+## Docker 실행
 
-Docker Desktop과 Compose v2가 필요합니다. 저장소 루트에서 `.env`를 만들고 예시 비밀번호를 로컬용 값으로 바꿉니다.
+Docker Desktop과 Compose v2가 필요합니다. 아래 명령은 저장소 루트에서 실행합니다.
 
-```bash
-cp .env.example .env
-```
+1. 이전에 같은 이름의 환경 변수를 `export`했다면 지워 `.env` 값을 사용하게 합니다. 셸 변수는 `.env`보다 우선합니다 ([Docker 문서](https://docs.docker.com/compose/how-tos/environment-variables/envvars-precedence/)).
 
-이미지를 빌드하고 앱과 PostgreSQL을 시작합니다.
+   ```bash
+   unset DB_NAME DB_USERNAME DB_PASSWORD APP_PORT
+   ```
 
-```bash
-docker compose config
-docker compose up --build
-```
+2. 처음 실행할 때만 예시 파일을 복사합니다. `.env`가 이미 있으면 복사하지 말고 기존 파일을 편집하세요. `DB_PASSWORD`를 로컬용 비밀번호로 바꾸고 저장합니다.
 
-브라우저에서 [http://localhost:8080](http://localhost:8080)을 엽니다. 프론트엔드 정적 파일은 멀티 스테이지 빌드 중 백엔드 JAR에 포함됩니다. Compose의 DB는 컨테이너 내부 네트워크에서만 접근하고, 앱은 기본적으로 로컬 호스트의 8080 포트에만 공개됩니다. 로컬 Spring Boot가 이미 8080을 사용 중이면 먼저 종료하거나 `.env`의 `APP_PORT`를 다른 호스트 포트로 바꾸세요.
+   ```bash
+   test -f .env || cp .env.example .env
+   open -e .env
+   ```
 
-종료할 때는 다른 터미널에서 아래 명령을 실행합니다. 일반 `down`은 PostgreSQL 볼륨을 보존하므로 다음 실행 때 DB가 유지됩니다.
+3. 설정을 비밀값 출력 없이 검증합니다. 성공하면 출력 없이 끝납니다.
 
-```bash
-docker compose down
-```
+   ```bash
+   docker compose config --quiet
+   ```
 
-`docker compose down -v`는 DB 볼륨과 저장 데이터를 삭제하므로 초기화가 필요할 때만 사용하세요. 앱은 시작할 때 `data.sql`로 기준 시드 테이블을 다시 채웁니다. 이 테이블을 직접 수정한 내용은 앱 재시작 시 보존되지 않습니다.
+4. 앱 이미지를 빌드하고 앱·PostgreSQL을 시작합니다.
+
+   ```bash
+   docker compose up --build -d
+   docker compose ps
+   ```
+
+   DB가 `healthy`이고 앱이 실행 중이면 [http://localhost:8080](http://localhost:8080)을 엽니다. 앱 로그는 `docker compose logs -f app`으로 확인할 수 있습니다. 로그 보기만 끝내려면 `Ctrl+C`를 누르세요. 컨테이너는 계속 실행됩니다.
+
+앱은 로컬 호스트에만 공개되고 DB 포트는 호스트에 공개되지 않습니다. 로컬 Spring Boot가 이미 8080을 사용 중이면 종료하거나 `.env`에서 `APP_PORT=8081`로 바꾸세요.
+
+종료할 때는 `docker compose down`을 실행합니다. PostgreSQL 볼륨은 보존됩니다. `docker compose down -v`는 DB 데이터를 삭제하므로 의도적으로 초기화할 때만 사용하세요. 앱 시작 때 기준 시드 테이블은 `data.sql` 내용으로 다시 채워집니다.
 
 ## 현재 기능
 
