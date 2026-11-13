@@ -48,6 +48,26 @@ CREATE TABLE IF NOT EXISTS checklist_item_exclude_tag (
     CHECK (length(trim(tag)) > 0)
 );
 
+CREATE TABLE IF NOT EXISTS country_power_supply (
+    country_code VARCHAR(2) NOT NULL CHECK (country_code ~ '^[A-Z]{2}$'),
+    voltage_v SMALLINT NOT NULL CHECK (voltage_v > 0),
+    frequency_hz SMALLINT NOT NULL CHECK (frequency_hz > 0),
+    note VARCHAR(250) NOT NULL DEFAULT '',
+    source_url VARCHAR(500) NOT NULL CHECK (length(trim(source_url)) > 0),
+    checked_on DATE NOT NULL,
+    PRIMARY KEY (country_code, voltage_v, frequency_hz),
+    CHECK (source_url LIKE 'https://%')
+);
+
+CREATE TABLE IF NOT EXISTS country_power_plug (
+    country_code VARCHAR(2) NOT NULL CHECK (country_code ~ '^[A-Z]{2}$'),
+    plug_type VARCHAR(1) NOT NULL CHECK (plug_type IN ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O')),
+    source_url VARCHAR(500) NOT NULL CHECK (length(trim(source_url)) > 0),
+    checked_on DATE NOT NULL,
+    PRIMARY KEY (country_code, plug_type),
+    CHECK (source_url LIKE 'https://%')
+);
+
 CREATE INDEX IF NOT EXISTS idx_checklist_item_category_scope
     ON checklist_item (category, scope);
 CREATE INDEX IF NOT EXISTS idx_checklist_item_required_tag_tag

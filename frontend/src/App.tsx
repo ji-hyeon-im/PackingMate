@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { createChecklist, getCountries } from './api/checklist'
 import { loadChecklist, saveChecklist } from './utils/storage'
-import type { ChecklistItem, ChecklistRequest, ChecklistResponse, CountryOption, ItemCategory, WeatherSummary } from './types'
+import type { ChecklistItem, ChecklistRequest, ChecklistResponse, CountryOption, ItemCategory, PowerSummary, WeatherSummary } from './types'
 import './App.css'
 
 const categories: { value: ItemCategory; label: string }[] = [
@@ -139,6 +139,7 @@ function App() {
       <div className="result-heading"><div><span className="eyebrow">PACKING LIST</span><h1>준비물 체크리스트</h1><p>{result.city ? `${result.city}, ` : ''}{responseCountryName ?? result.countryCode} · {result.tripDays}일 · {result.travelers}명</p></div><button className="secondary-button" type="button" onClick={() => { setResult(null); setStep(1) }}>여행 정보 수정</button></div>
       <div className="progress-panel"><div className="progress-copy"><strong>{completedCount} / {allItems.length} 완료</strong><span>체크 상태는 이 브라우저에 저장돼요.</span></div><div className="progress-track"><span style={{ width: `${allItems.length ? completedCount / allItems.length * 100 : 0}%` }} /></div></div>
       {result.weather && <WeatherNotice weather={result.weather} />}
+      {result.power && <PowerNotice power={result.power} />}
       <div className="checklist-columns">{(['PERSONAL', 'SHARED'] as const).map((scope) => { const scopedItems = allItems.filter((item) => item.scope === scope); return <section className="list-section" key={scope}><div className="list-title"><div><span className="eyebrow">{scope === 'PERSONAL' ? 'FOR YOU' : 'SHARE TOGETHER'}</span><h2>{scope === 'PERSONAL' ? '개인용 준비물' : '공동 준비물'}</h2></div><span className="item-count">{scopedItems.length}개</span></div>{scopedItems.length ? <ul className="item-list">{scopedItems.map((item) => <ChecklistRow key={item.itemId} item={item} checked={checkedIds.has(item.itemId)} onToggle={() => toggleChecked(item.itemId)} onRemove={() => removeCustomItem(item.itemId)} onQuantityChange={(change) => adjustQuantity(item.itemId, change)} />)}</ul> : <p className="empty-list">아직 등록된 준비물이 없어요.</p>}</section> })}</div>
       <section className="add-item-panel"><div><span className="eyebrow">MAKE IT YOURS</span><h2>직접 챙길 것도 추가하세요</h2><p>여행 준비물에 나만의 항목을 더할 수 있어요.</p></div><form className="add-item-form" onSubmit={addCustomItem}><label className="sr-only" htmlFor="new-item">추가할 준비물</label><input id="new-item" className="text-input" maxLength={80} placeholder="예: 보조 배터리" value={newItemName} onChange={(event) => setNewItemName(event.target.value)} required /><label className="sr-only" htmlFor="new-category">카테고리</label><select id="new-category" value={newItemCategory} onChange={(event) => setNewItemCategory(event.target.value as ItemCategory)}>{categories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}</select><label className="sr-only" htmlFor="new-scope">준비 범위</label><select id="new-scope" value={newItemScope} onChange={(event) => setNewItemScope(event.target.value as 'PERSONAL' | 'SHARED')}><option value="PERSONAL">개인용</option><option value="SHARED">공동용</option></select><button className="primary-button" type="submit">항목 추가 <span>+</span></button></form></section>
       <div className="result-actions"><button type="button" className="text-button" onClick={startOver}>새 체크리스트 만들기</button><span>진행 상태는 현재 기기에 저장됩니다.</span></div>
@@ -164,6 +165,31 @@ function WeatherNotice({ weather }: { weather: WeatherSummary }) {
     return <p className="weather-notice average" role="status">{temperatureText}예보 범위 밖이어서 NASA POWER 월평균 자료로 대체했습니다{period}. <a href="https://power.larc.nasa.gov/docs/services/api/temporal/climatology/" target="_blank" rel="noreferrer">출처: NASA POWER</a></p>
   }
   return <p className="weather-notice average" role="status">{temperatureText}Open-Meteo 예보 {weather.forecastDays}일과 NASA POWER 월평균 {weather.monthlyAverageDays}일을 함께 사용했습니다{period}. <a href="https://open-meteo.com/en/docs" target="_blank" rel="noreferrer">Open-Meteo</a> · <a href="https://power.larc.nasa.gov/docs/services/api/temporal/climatology/" target="_blank" rel="noreferrer">NASA POWER</a></p>
+}
+
+function PowerNotice({ power }: { power: PowerSummary }) {
+  const suppliesByVoltage = new Map<number, Set<number>>()
+  for (const supply of power.supplies) {
+    const frequencies = suppliesByVoltage.get(supply.voltage) ?? new Set<number>()
+    frequencies.add(supply.frequency)
+    suppliesByVoltage.set(supply.voltage, frequencies)
+  }
+  const supplyText = [...suppliesByVoltage.entries()]
+    .map(([voltage, frequencies]) => `${voltage}V · ${[...frequencies].sort((a, b) => a - b).join('/')}Hz`)
+    .join(' · ')
+  if (!supplyText && power.plugTypes.length === 0) return null
+  return <section className="power-notice" role="status" aria-label="목적지 전압과 플러그 안내">
+    <p><strong>목적지 전원</strong>{supplyText && ` ${supplyText}`}{power.plugTypes.length > 0 && ` · 플러그 ${power.plugTypes.join(', ')}`}</p>
+    {power.plugMismatch && <p>한국에서 사용하는 플러그와 맞지 않을 수 있어 공동용 멀티 어댑터를 추천합니다.</p>}
+    {(power.voltageCheckRecommended || power.frequencyCheckRecommended) &&
+      <p>목적지 전압이나 주파수가 다를 수 있습니다. 사용 전 기기 라벨의 정격 전압·주파수 범위를 확인하세요.</p>}
+    {[...new Set(power.supplies.map((supply) => supply.note).filter(Boolean))].map((note) =>
+      <p key={note}>{note}</p>
+    )}
+    {power.sources.length > 0 && <details><summary>기준 출처와 확인일</summary><ul>{power.sources.map((source) =>
+      <li key={`${source.kind}-${source.url}`}><a href={source.url} target="_blank" rel="noreferrer">{source.kind === 'SUPPLY' ? '전압·주파수 출처' : '플러그 출처'}</a> · {source.checkedOn}</li>
+    )}</ul></details>}
+  </section>
 }
 
 function Choice({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {

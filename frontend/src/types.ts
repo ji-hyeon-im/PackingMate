@@ -52,6 +52,15 @@ export interface ChecklistItem {
   userAdded?: boolean
 }
 
+export interface PowerSummary {
+  supplies: { voltage: number; frequency: number; note: string }[]
+  plugTypes: string[]
+  plugMismatch: boolean
+  voltageCheckRecommended: boolean
+  frequencyCheckRecommended: boolean
+  sources: { kind: 'SUPPLY' | 'PLUG'; url: string; checkedOn: string }[]
+}
+
 export interface ChecklistResponse {
   countryCode: string
   city: string | null
@@ -59,6 +68,7 @@ export interface ChecklistResponse {
   travelers: number
   items: ChecklistItem[]
   weather?: WeatherSummary
+  power?: PowerSummary
 }
 
 export interface SavedChecklist {
