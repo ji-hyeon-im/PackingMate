@@ -54,11 +54,11 @@ JSON 요청을 검증하고 날씨 자료와 현재 DB의 준비물 규칙으로
 {
   "power": {
     "supplies": [
-      { "voltage": 100, "frequency": 50, "note": "동일본(도쿄 포함)은 50Hz. 서일본 일부는 60Hz." },
-      { "voltage": 100, "frequency": 60, "note": "서일본(나고야·교토·오사카 등)은 60Hz." }
+      { "voltage": 100, "frequency": 50, "note": "동일본(도쿄 포함)은 50Hz, 서일본(나고야·교토·오사카 등)은 60Hz." },
+      { "voltage": 100, "frequency": 60, "note": "동일본(도쿄 포함)은 50Hz, 서일본(나고야·교토·오사카 등)은 60Hz." }
     ],
     "plugTypes": ["A"],
-    "plugMismatch": true,
+    "plugCompatibility": "INCOMPATIBLE",
     "voltageCheckRecommended": true,
     "frequencyCheckRecommended": true,
     "sources": [
@@ -69,7 +69,7 @@ JSON 요청을 검증하고 날씨 자료와 현재 DB의 준비물 규칙으로
 }
 ```
 
-`supplies`와 `plugTypes`는 지원 국가별 DB 기준 자료입니다. `plugMismatch`가 참이면 기존 `travel-adapter` 공동용 항목을 규칙 엔진에 추가합니다. `voltageCheckRecommended`는 목적지에 220V가 아닌 공급값이 포함될 때, `frequencyCheckRecommended`는 60Hz가 아닌 값이 포함될 때 참입니다. 해당 안내는 기기 라벨의 정격을 확인하라는 의미이며 변압기를 자동 추천하지 않습니다. `sources`에는 적용된 전원·플러그 근거 URL과 확인일을 담습니다. 여행지 건물의 실제 콘센트와 전원은 다를 수 있습니다.
+`supplies`와 `plugTypes`는 지원 국가별 DB 기준 자료입니다. `plugCompatibility`는 목적지 콘센트 유형과 한국의 C/F 기준을 비교한 `COMPATIBLE`, `PARTIAL`, `INCOMPATIBLE` 중 하나입니다. `INCOMPATIBLE`일 때만 기존 `travel-adapter` 공동용 항목을 규칙 엔진에 추가합니다. `PARTIAL`은 화면에서 기기 확인을 안내하며, 사용자가 선택하면 체크리스트에 어댑터를 추가합니다. `voltageCheckRecommended`는 목적지에 220V가 아닌 공급값이 포함될 때, `frequencyCheckRecommended`는 60Hz가 아닌 값이 포함될 때 참입니다. 기기 라벨의 정격 범위를 확인해야 하며 플러그 어댑터는 전압을 바꾸지 않습니다. `sources`에는 적용된 전원·플러그 근거 URL과 확인일을 담습니다. 여행지 건물의 실제 콘센트와 전원은 다를 수 있습니다.
 
 날씨 조회 시 입력 도시와 국가 코드는 Open-Meteo 지오코딩으로 전송되며, 지오코딩 좌표는 예보 및 NASA POWER 조회에 사용됩니다. 출발일·귀국일은 서버에서 예보 범위와 대조하며 외부 서비스로 전송하지 않습니다. 서버는 여행 입력을 저장하지 않습니다. 지오코딩 서비스가 일시적으로 실패하면 체크리스트는 반환하고 날씨 상태는 `UNAVAILABLE`로 처리합니다.
 
