@@ -55,7 +55,9 @@ export interface ChecklistItem {
 export interface PowerSummary {
   supplies: { voltage: number; frequency: number; note: string }[]
   plugTypes: string[]
-  plugMismatch: boolean
+  plugCompatibility?: 'COMPATIBLE' | 'PARTIAL' | 'INCOMPATIBLE'
+  /** 이전 localStorage 응답을 읽기 위한 호환 필드 */
+  plugMismatch?: boolean
   voltageCheckRecommended: boolean
   frequencyCheckRecommended: boolean
   sources: { kind: 'SUPPLY' | 'PLUG'; url: string; checkedOn: string }[]

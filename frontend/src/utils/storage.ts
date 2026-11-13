@@ -92,8 +92,12 @@ function isPowerSummary(value: unknown): value is PowerSummary {
   const sourcesValid = Array.isArray(value.sources) && value.sources.every((source: unknown) =>
     isRecord(source) && (source.kind === 'SUPPLY' || source.kind === 'PLUG') &&
     isHttpsUrl(source.url) && isString(source.checkedOn))
-  return suppliesValid && isStringArray(value.plugTypes) &&
-    typeof value.plugMismatch === 'boolean' && typeof value.voltageCheckRecommended === 'boolean' &&
+  const compatibilityValid = value.plugCompatibility === undefined ||
+    ['COMPATIBLE', 'PARTIAL', 'INCOMPATIBLE'].includes(String(value.plugCompatibility))
+  const legacyCompatibilityValid = value.plugMismatch === undefined || typeof value.plugMismatch === 'boolean'
+  return suppliesValid && isStringArray(value.plugTypes) && compatibilityValid && legacyCompatibilityValid &&
+    (value.plugCompatibility !== undefined || value.plugMismatch !== undefined) &&
+    typeof value.voltageCheckRecommended === 'boolean' &&
     typeof value.frequencyCheckRecommended === 'boolean' && sourcesValid
 }
 

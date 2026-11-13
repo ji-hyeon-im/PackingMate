@@ -28,7 +28,12 @@ public class PowerStandardService {
         Set<String> destinationPlugTypes = standard.plugs().stream()
                 .map(PowerStandard.Plug::type)
                 .collect(java.util.stream.Collectors.toSet());
-        boolean plugMismatch = !destinationPlugTypes.containsAll(HOME_PLUG_TYPES);
+        long compatibleHomePlugTypes = HOME_PLUG_TYPES.stream().filter(destinationPlugTypes::contains).count();
+        PowerSummary.PlugCompatibility plugCompatibility = compatibleHomePlugTypes == HOME_PLUG_TYPES.size()
+                ? PowerSummary.PlugCompatibility.COMPATIBLE
+                : compatibleHomePlugTypes == 0
+                        ? PowerSummary.PlugCompatibility.INCOMPATIBLE
+                        : PowerSummary.PlugCompatibility.PARTIAL;
         boolean voltageCheckRecommended = standard.supplies().stream()
                 .anyMatch(supply -> supply.voltage() != HOME_VOLTAGE);
         boolean frequencyCheckRecommended = standard.supplies().stream()
@@ -44,7 +49,7 @@ public class PowerStandardService {
         standard.plugs().stream().map(PowerStandard.Plug::sourceUrl).distinct().forEach(url ->
                 sources.add(new PowerSummary.Source("PLUG", url,
                         latestPlugCheck(standard, url))));
-        return new PowerSummary(supplies, plugTypes, plugMismatch, voltageCheckRecommended,
+        return new PowerSummary(supplies, plugTypes, plugCompatibility, voltageCheckRecommended,
                 frequencyCheckRecommended, sources);
     }
 

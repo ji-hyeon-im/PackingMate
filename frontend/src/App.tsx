@@ -95,6 +95,12 @@ function App() {
     }])
     setNewItemName('')
   }
+  function addAdapterItem() {
+    setCustomItems((current) => [...current, {
+      itemId: `custom-${crypto.randomUUID()}`, name: '멀티 어댑터', aliases: [], category: 'SAFETY_OTHER',
+      scope: 'SHARED', quantity: 1, matchedTags: [], reasonTemplate: '기기 플러그 모양을 확인한 뒤 필요하면 사용하세요.', userAdded: true,
+    }])
+  }
   function removeCustomItem(itemId: string) {
     setCustomItems((current) => current.filter((item) => item.itemId !== itemId))
     setCheckedIds((current) => { const next = new Set(current); next.delete(itemId); return next })
@@ -139,7 +145,7 @@ function App() {
       <div className="result-heading"><div><span className="eyebrow">PACKING LIST</span><h1>준비물 체크리스트</h1><p>{result.city ? `${result.city}, ` : ''}{responseCountryName ?? result.countryCode} · {result.tripDays}일 · {result.travelers}명</p></div><button className="secondary-button" type="button" onClick={() => { setResult(null); setStep(1) }}>여행 정보 수정</button></div>
       <div className="progress-panel"><div className="progress-copy"><strong>{completedCount} / {allItems.length} 완료</strong><span>체크 상태는 이 브라우저에 저장돼요.</span></div><div className="progress-track"><span style={{ width: `${allItems.length ? completedCount / allItems.length * 100 : 0}%` }} /></div></div>
       {result.weather && <WeatherNotice weather={result.weather} />}
-      {result.power && <PowerNotice power={result.power} />}
+      {result.power && <PowerNotice power={result.power} adapterAdded={allItems.some((item) => item.name.trim() === '멀티 어댑터')} onAddAdapter={addAdapterItem} />}
       <div className="checklist-columns">{(['PERSONAL', 'SHARED'] as const).map((scope) => { const scopedItems = allItems.filter((item) => item.scope === scope); return <section className="list-section" key={scope}><div className="list-title"><div><span className="eyebrow">{scope === 'PERSONAL' ? 'FOR YOU' : 'SHARE TOGETHER'}</span><h2>{scope === 'PERSONAL' ? '개인용 준비물' : '공동 준비물'}</h2></div><span className="item-count">{scopedItems.length}개</span></div>{scopedItems.length ? <ul className="item-list">{scopedItems.map((item) => <ChecklistRow key={item.itemId} item={item} checked={checkedIds.has(item.itemId)} onToggle={() => toggleChecked(item.itemId)} onRemove={() => removeCustomItem(item.itemId)} onQuantityChange={(change) => adjustQuantity(item.itemId, change)} />)}</ul> : <p className="empty-list">아직 등록된 준비물이 없어요.</p>}</section> })}</div>
       <section className="add-item-panel"><div><span className="eyebrow">MAKE IT YOURS</span><h2>직접 챙길 것도 추가하세요</h2><p>여행 준비물에 나만의 항목을 더할 수 있어요.</p></div><form className="add-item-form" onSubmit={addCustomItem}><label className="sr-only" htmlFor="new-item">추가할 준비물</label><input id="new-item" className="text-input" maxLength={80} placeholder="예: 보조 배터리" value={newItemName} onChange={(event) => setNewItemName(event.target.value)} required /><label className="sr-only" htmlFor="new-category">카테고리</label><select id="new-category" value={newItemCategory} onChange={(event) => setNewItemCategory(event.target.value as ItemCategory)}>{categories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}</select><label className="sr-only" htmlFor="new-scope">준비 범위</label><select id="new-scope" value={newItemScope} onChange={(event) => setNewItemScope(event.target.value as 'PERSONAL' | 'SHARED')}><option value="PERSONAL">개인용</option><option value="SHARED">공동용</option></select><button className="primary-button" type="submit">항목 추가 <span>+</span></button></form></section>
       <div className="result-actions"><button type="button" className="text-button" onClick={startOver}>새 체크리스트 만들기</button><span>진행 상태는 현재 기기에 저장됩니다.</span></div>
@@ -167,7 +173,7 @@ function WeatherNotice({ weather }: { weather: WeatherSummary }) {
   return <p className="weather-notice average" role="status">{temperatureText}Open-Meteo 예보 {weather.forecastDays}일과 NASA POWER 월평균 {weather.monthlyAverageDays}일을 함께 사용했습니다{period}. <a href="https://open-meteo.com/en/docs" target="_blank" rel="noreferrer">Open-Meteo</a> · <a href="https://power.larc.nasa.gov/docs/services/api/temporal/climatology/" target="_blank" rel="noreferrer">NASA POWER</a></p>
 }
 
-function PowerNotice({ power }: { power: PowerSummary }) {
+function PowerNotice({ power, adapterAdded, onAddAdapter }: { power: PowerSummary; adapterAdded: boolean; onAddAdapter: () => void }) {
   const suppliesByVoltage = new Map<number, Set<number>>()
   for (const supply of power.supplies) {
     const frequencies = suppliesByVoltage.get(supply.voltage) ?? new Set<number>()
@@ -178,11 +184,19 @@ function PowerNotice({ power }: { power: PowerSummary }) {
     .map(([voltage, frequencies]) => `${voltage}V · ${[...frequencies].sort((a, b) => a - b).join('/')}Hz`)
     .join(' · ')
   if (!supplyText && power.plugTypes.length === 0) return null
+  const compatibleTypes = ['C', 'F'].filter((plugType) => power.plugTypes.includes(plugType))
+  const plugCompatibility = power.plugCompatibility ?? (compatibleTypes.length === 2
+    ? 'COMPATIBLE'
+    : compatibleTypes.length === 1 ? 'PARTIAL' : 'INCOMPATIBLE')
+  const differentStandards = [
+    power.voltageCheckRecommended ? '전압' : '',
+    power.frequencyCheckRecommended ? '주파수' : '',
+  ].filter(Boolean).join('·')
   return <section className="power-notice" role="status" aria-label="목적지 전압과 플러그 안내">
-    <p><strong>목적지 전원</strong>{supplyText && ` ${supplyText}`}{power.plugTypes.length > 0 && ` · 플러그 ${power.plugTypes.join(', ')}`}</p>
-    {power.plugMismatch && <p>한국에서 사용하는 플러그와 맞지 않을 수 있어 공동용 멀티 어댑터를 추천합니다.</p>}
-    {(power.voltageCheckRecommended || power.frequencyCheckRecommended) &&
-      <p>목적지 전압이나 주파수가 다를 수 있습니다. 사용 전 기기 라벨의 정격 전압·주파수 범위를 확인하세요.</p>}
+    <p><strong>전압·플러그</strong>{supplyText && ` ${supplyText}`}{power.plugTypes.length > 0 && ` · ${power.plugTypes.join(', ')}형 콘센트`}</p>
+    {plugCompatibility === 'INCOMPATIBLE' && <p>한국 플러그와 맞는 유형이 없어 멀티 어댑터를 준비하세요.</p>}
+    {plugCompatibility === 'PARTIAL' && <div className="power-choice"><p>한국 플러그 일부만 맞을 수 있어요. 기기 플러그 모양을 확인하고, 맞지 않는 기기가 있으면 어댑터를 챙기세요.</p>{!adapterAdded && <button type="button" className="text-button" onClick={onAddAdapter}>체크리스트에 멀티 어댑터 추가</button>}</div>}
+    {differentStandards && <p>{differentStandards}가 한국과 달라요. 기기 라벨의 정격 범위를 확인하세요. 플러그 어댑터는 전압을 바꾸지 않습니다.</p>}
     {[...new Set(power.supplies.map((supply) => supply.note).filter(Boolean))].map((note) =>
       <p key={note}>{note}</p>
     )}

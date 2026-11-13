@@ -75,7 +75,7 @@ public class ChecklistService {
         if (weather.uvProtectionRecommended()) {
             additionalTags.add("weather:uv-protection");
         }
-        if (power.plugMismatch()) {
+        if (power.plugCompatibility() == PowerSummary.PlugCompatibility.INCOMPATIBLE) {
             additionalTags.add("power:plug-mismatch");
         }
         RuleInput ruleInput = new RuleInput(

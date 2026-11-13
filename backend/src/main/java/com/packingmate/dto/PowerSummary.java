@@ -7,7 +7,7 @@ import java.util.List;
 public record PowerSummary(
         List<Supply> supplies,
         List<String> plugTypes,
-        boolean plugMismatch,
+        PlugCompatibility plugCompatibility,
         boolean voltageCheckRecommended,
         boolean frequencyCheckRecommended,
         List<Source> sources
@@ -19,7 +19,13 @@ public record PowerSummary(
     }
 
     public static PowerSummary unavailable() {
-        return new PowerSummary(List.of(), List.of(), false, false, false, List.of());
+        return new PowerSummary(List.of(), List.of(), PlugCompatibility.COMPATIBLE, false, false, List.of());
+    }
+
+    public enum PlugCompatibility {
+        COMPATIBLE,
+        PARTIAL,
+        INCOMPATIBLE
     }
 
     public record Supply(int voltage, int frequency, String note) {

@@ -130,8 +130,8 @@ ON CONFLICT DO NOTHING;
 
 -- 국가 전원 기준. 공식 출처, 확인일과 지역 예외를 함께 시드한다.
 INSERT INTO country_power_supply (country_code, voltage_v, frequency_hz, note, source_url, checked_on) VALUES
-    ('JP', 100, 50, '동일본(도쿄 포함)은 50Hz. 서일본 일부는 60Hz.', 'https://www.sg.emb-japan.go.jp/itpr_en/japaninfo_electricity.html', '2026-11-13'),
-    ('JP', 100, 60, '서일본(나고야·교토·오사카 등)은 60Hz.', 'https://www.sg.emb-japan.go.jp/itpr_en/japaninfo_electricity.html', '2026-11-13'),
+    ('JP', 100, 50, '동일본(도쿄 포함)은 50Hz, 서일본(나고야·교토·오사카 등)은 60Hz.', 'https://www.sg.emb-japan.go.jp/itpr_en/japaninfo_electricity.html', '2026-11-13'),
+    ('JP', 100, 60, '동일본(도쿄 포함)은 50Hz, 서일본(나고야·교토·오사카 등)은 60Hz.', 'https://www.sg.emb-japan.go.jp/itpr_en/japaninfo_electricity.html', '2026-11-13'),
     ('VN', 220, 50, '정부 고시 제품 시험 조건에 220V ±5%, 50Hz ±1%가 표시됩니다.', 'https://moit.gov.vn/upload/2005517/20210705/skmbt_363191211171309524.pdf', '2026-11-13'),
     ('US', 120, 60, '가정용 표준 전압. 일부 회로는 다른 전압을 사용합니다.', 'https://www.energy.gov/node/1508886', '2026-11-13'),
     ('TH', 220, 50, '', 'https://www.am2026thailand.go.th/electrical-info-and-devices', '2026-11-13'),
