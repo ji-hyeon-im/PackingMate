@@ -20,7 +20,7 @@ PackingMate/
 
 ## 실행
 
-PostgreSQL을 실행하고 `packingmate` 데이터베이스·사용자를 준비한 뒤, 백엔드 실행 셸에서 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` 환경 변수를 설정합니다. 백엔드는 시작 시 `schema.sql`과 `data.sql`을 적용합니다. Gradle은 `.env` 파일을 자동으로 읽지 않습니다.
+PostgreSQL을 실행하고 `packingmate` 데이터베이스·사용자를 준비한 뒤, 백엔드 실행 셸에서 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` 환경 변수를 설정합니다. 백엔드는 시작 시 `schema.sql`과 `data.sql`을 적용합니다. 체크리스트 항목·별칭·태그 테이블은 SQL 시드 전용이며, `data.sql`이 시작할 때마다 해당 테이블 전체를 시드 내용으로 다시 채웁니다. 이 테이블에 직접 추가·수정한 내용은 다음 시작 때 보존되지 않습니다. Gradle은 `.env` 파일을 자동으로 읽지 않습니다.
 
 백엔드:
 
