@@ -1,56 +1,67 @@
-# 체크리스트 규칙 도메인 테스트 기록
+# 체크리스트 규칙 테스트 및 개선 기록
 
-## 테스트 범위
+## 1. 준비물 규칙 도메인 모델
 
-`ChecklistItem` 필수값과 불변 컬렉션, 고정·일수 비례 수량 규칙, 최대 수량 상한 및 잘못된 입력을 확인한다.
+대상 커밋: `feat: 준비물 규칙 도메인 모델 추가`
 
-## 조건별 결과
+| 확인 조건 | 기대 결과 | 실제 결과 | 발견한 문제·수정 | 재시험 결과 |
+|---|---|---|---|---|
+| `DailyCap(1)`, 3일, 상한 10 | 4개 계산 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+| `DailyCap(1)`, 8일, 상한 5 | 상한 5 적용 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+| `Rotation(2)`, 5일 | 올림하여 3개 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+| `Consumable(3)`, 4일 | 올림하여 2개 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+| 잘못된 여행 일수·최대 수량·수량 규칙 값 | 입력 예외 발생 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+| 입력 태그 집합 변경 후 모델 확인 | 생성 시점의 값 유지 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
 
-| 조건 | 기대 결과 | 실제 결과 | 발견한 문제 | 수정 사항 | 재시험 결과 |
-|---|---|---|---|---|---|
-| 3일 여행, `DailyCap(1)`, 최대 10 | 4개 | 사용자 로컬에서 테스트 명령 `BUILD SUCCESSFUL` | 실행 환경 간 Gradle native library/cache 접근 차이 | 코드 변경 없이 사용자 로컬 Gradle로 실행 | 성공 확인 |
-| 8일 여행, `DailyCap(1)`, 최대 5 | 최대치인 5개 | 사용자 로컬에서 테스트 명령 `BUILD SUCCESSFUL` | 동일 | 코드 변경 없이 사용자 로컬 Gradle로 실행 | 성공 확인 |
-| 5일 여행, `Rotation(2)` | 올림하여 3개 | 사용자 로컬에서 테스트 명령 `BUILD SUCCESSFUL` | 동일 | 코드 변경 없이 사용자 로컬 Gradle로 실행 | 성공 확인 |
-| 4일 여행, `Consumable(3)` | 올림하여 2개 | 사용자 로컬에서 테스트 명령 `BUILD SUCCESSFUL` | 동일 | 코드 변경 없이 사용자 로컬 Gradle로 실행 | 성공 확인 |
-| 준비물 최대 수량 0 또는 여행 일수 0 | 잘못된 입력 예외 | 사용자 로컬에서 테스트 명령 `BUILD SUCCESSFUL` | 동일 | 코드 변경 없이 사용자 로컬 Gradle로 실행 | 성공 확인 |
-
-도메인 소스는 `javac --release 21` 컴파일에도 성공했다. 에이전트 환경에서는 Gradle 캐시 권한 및 native library 오류로 테스트를 시작하지 못했지만, 사용자가 로컬에서 해당 테스트 명령을 실행해 `BUILD SUCCESSFUL`을 확인했다.
-
-실행 명령: `cd backend && ./gradlew test --tests com.packingmate.domain.ChecklistItemTest`
-
-Gradle 실행 환경이 복구되면 이 테스트를 다시 실행하고 실제 assertion 결과 및 재시험 결과로 갱신한다. 실제 실행 전 결과를 추정해 기재하지 않는다.
-
-## SQL 초기 데이터 검증
-
-`backend/src/test/resources/sql/checklist_seed_assertions.sql`은 PostgreSQL에서 시드 항목 수(40~60개), 별칭·조건 태그 존재, 속옷 일수 비례 규칙, 상의 순환 착용 규칙, 개인용 소모품 및 공동용 수량 1 고정을 확인한다.
-
-PostgreSQL 데이터베이스가 실행 중이고 `packingmate` 데이터베이스 및 사용자가 준비되어 있을 때 저장소 루트에서 실행한다.
+실행 명령:
 
 ```bash
-cd backend
+cd /Users/robin/클라우드프로그래밍/PackingMate/backend
+./gradlew test --tests com.packingmate.domain.ChecklistItemTest
+```
+
+## 2. SQL 스키마 및 초기 준비물 데이터
+
+대상 커밋: `feat: 준비물 규칙 데이터와 초기 항목 추가`
+
+PostgreSQL 16 서비스가 실행 중인지 `pg_isready -h localhost -p 5432`로 확인하고, `packingmate` 사용자와 데이터베이스를 준비한 뒤 검증했다.
+
+| 확인 조건 | 기대 결과 | 실제 결과 | 발견한 문제·수정 | 재시험 결과 |
+|---|---|---|---|---|
+| 테이블·인덱스 생성 | 스키마 적용 성공 | 테이블 4개, 인덱스 3개 생성 | 최초에는 서버 접속 거부. PostgreSQL 서비스를 시작하고 포트 응답을 확인함 | SQL 전체 검증 통과 |
+| 기본 준비물 개수 | 40~60개 | 52개 | 문제 없음, 수정 없음 | 통과 |
+| 별칭·필요 태그 시드 | 10개 이상 | 별칭 18개, 필요 태그 15개 | 문제 없음, 수정 없음 | 통과 |
+| 수량 규칙·개인/공동 범위 | 속옷 `DAILY_CAP`, 상의 `ROTATION`, 개인 소모품 및 공동용 수량 1 | 검증 SQL 통과 | 문제 없음, 수정 없음 | `체크리스트 시드 검증 성공` NOTICE |
+
+실행 명령:
+
+```bash
+cd /Users/robin/클라우드프로그래밍/PackingMate/backend
 psql -h localhost -U packingmate -d packingmate -v ON_ERROR_STOP=1 \
   -f src/main/resources/schema.sql \
   -f src/main/resources/data.sql \
   -f src/test/resources/sql/checklist_seed_assertions.sql
 ```
 
-기대 결과는 명령 종료 코드 0과 `체크리스트 시드 검증 성공` NOTICE이다. 실제 실행 결과, 발견한 문제 및 수정·재시험 결과는 실행 후 이 기록에 추가한다. 이번 파일 작업에서는 요청에 따라 테스트를 실행하지 않았다.
+Docker에서 PostgreSQL이 같은 `5432` 포트를 사용할 때는 로컬 PostgreSQL과 포트가 충돌하지 않도록 필요 시 `brew services stop postgresql@16`으로 로컬 서비스를 중지한다.
 
-## 태그 기반 규칙 엔진
+## 3. 태그 기반 체크리스트 규칙 엔진
 
-| 조건 | 기대 결과 | 실제 결과 | 발견한 문제 | 수정 사항 | 재시험 결과 |
-|---|---|---|---|---|---|
-| 기본 항목 및 필요 태그 여러 개 중 하나 일치 | 기본 항목과 조건 항목 포함 | 이번 구현에서 미실행 | 실행 전 미확인 | 미확인 | 미실행 |
-| 제외 태그와 같은 태그가 존재 | 해당 항목 제외 | 이번 구현에서 미실행 | 실행 전 미확인 | 미확인 | 미실행 |
-| 같은 itemId의 여러 조건이 일치 | 항목 1개로 병합, 근거 태그 합침 | 이번 구현에서 미실행 | 실행 전 미확인 | 미확인 | 미실행 |
-| 공동용 항목과 개인용 일수 비례 항목 | 공동용 1개, 개인용은 계산 후 상한 적용 | 이번 구현에서 미실행 | 실행 전 미확인 | 미확인 | 미실행 |
-| 기온 경계값·강수·기간·숙소·개인 상황 입력 | 지정 상황 태그 생성 | 이번 구현에서 미실행 | 실행 전 미확인 | 미확인 | 미실행 |
+대상 커밋: `feat: 태그 기반 체크리스트 규칙 엔진 구현`
 
-이번 구현에서는 요청에 따라 테스트를 실행하지 않았다.
+| 확인 조건 | 기대 결과 | 실제 결과 | 발견한 문제·수정 | 재시험 결과 |
+|---|---|---|---|---|
+| 필요 태그가 여러 개이고 그중 하나가 입력됨 | 항목 포함 (OR 매칭) | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+| 제외 태그가 입력 태그와 일치 | 항목 제외 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+| 같은 `itemId`에 여러 조건이 일치 | 한 항목으로 병합, 근거 태그 결합 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+| 개인용·공동용 수량 계산 | 개인용 규칙·상한 적용, 공동용 1개 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+| 기간·기온 경계·강수·숙소·개인 상황 | 해당 상황 태그 생성 | 통과 | 문제 없음, 수정 없음 | `BUILD SUCCESSFUL` |
+
+실행 명령:
 
 ```bash
-cd backend
+cd /Users/robin/클라우드프로그래밍/PackingMate/backend
 ./gradlew test --tests com.packingmate.rule.TagGeneratorTest --tests com.packingmate.rule.RuleEngineTest
 ```
 
-이 명령은 규칙 엔진의 순수 단위 테스트를 실행한다. Spring 컨텍스트와 DB 연결까지 확인하려면 PostgreSQL을 실행하고 `DB_PASSWORD` 환경 변수를 설정한 뒤 `./gradlew test`를 실행한다.
+위 결과는 사용자가 보고한 지정 단위 테스트와 SQL 검증 실행 결과를 기록한 것이다. 전체 `./gradlew test` 또는 Spring 컨텍스트를 포함한 통합 테스트 결과는 별도로 확인하지 않았다.
