@@ -19,3 +19,19 @@
 실행 명령: `cd backend && ./gradlew test --tests com.packingmate.domain.ChecklistItemTest`
 
 Gradle 실행 환경이 복구되면 이 테스트를 다시 실행하고 실제 assertion 결과 및 재시험 결과로 갱신한다. 실제 실행 전 결과를 추정해 기재하지 않는다.
+
+## SQL 초기 데이터 검증
+
+`backend/src/test/resources/sql/checklist_seed_assertions.sql`은 PostgreSQL에서 시드 항목 수(40~60개), 별칭·조건 태그 존재, 속옷 일수 비례 규칙, 상의 순환 착용 규칙, 공동 소모품 규칙을 확인한다.
+
+PostgreSQL 데이터베이스가 실행 중이고 `packingmate` 데이터베이스 및 사용자가 준비되어 있을 때 저장소 루트에서 실행한다.
+
+```bash
+cd backend
+psql -h localhost -U packingmate -d packingmate -v ON_ERROR_STOP=1 \
+  -f src/main/resources/schema.sql \
+  -f src/main/resources/data.sql \
+  -f src/test/resources/sql/checklist_seed_assertions.sql
+```
+
+기대 결과는 명령 종료 코드 0과 `체크리스트 시드 검증 성공` NOTICE이다. 실제 실행 결과, 발견한 문제 및 수정·재시험 결과는 실행 후 이 기록에 추가한다. 이번 파일 작업에서는 요청에 따라 테스트를 실행하지 않았다.
