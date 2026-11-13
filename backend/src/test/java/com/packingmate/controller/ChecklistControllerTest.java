@@ -33,7 +33,8 @@ class ChecklistControllerTest {
                 new ChecklistResponse("JP", "Tokyo", 7, 2,
                         List.of(new ChecklistResponse.Item("passport", "Passport", Set.of(),
                                 ItemCategory.DOCUMENTS_FINANCE, ItemScope.PERSONAL, 1,
-                                Set.of("transport:flight"), "Required for travel."))));
+                                Set.of("transport:flight"), "Required for travel.",
+                                ChecklistResponse.RecommendationType.CONDITIONAL))));
 
         mockMvc.perform(post("/api/v1/checklists")
                         .contentType("application/json")
@@ -41,6 +42,7 @@ class ChecklistControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tripDays").value(7))
                 .andExpect(jsonPath("$.items[0].itemId").value("passport"))
+                .andExpect(jsonPath("$.items[0].recommendationType").value("CONDITIONAL"))
                 .andExpect(jsonPath("$.items[0].matchedTags[0]").value("transport:flight"));
     }
 
