@@ -1,0 +1,25 @@
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+
+# Operating system and editor files
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+# Backend Gradle and Java build output
+backend/.gradle/
+backend/build/
+*.class
+
+# Logs
+*.log
+logs/
