@@ -94,7 +94,7 @@ public class WeatherService {
         }
         WeatherSummary.Source source = sourceFor(forecastByDate.size(), climate == null ? 0 : monthlyDays);
         return new WeatherSummary(source, temperatureTotal / coveredDays, rainy, uvProtection,
-                forecastByDate.size(), climate == null ? 0 : monthlyDays,
+                forecastByDate.size(), climate == null ? 0 : Math.toIntExact(monthlyDays),
                 climate == null ? null : climate.period());
     }
 

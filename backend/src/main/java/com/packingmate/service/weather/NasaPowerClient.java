@@ -1,6 +1,6 @@
 package com.packingmate.service.weather;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.stereotype.Component;
