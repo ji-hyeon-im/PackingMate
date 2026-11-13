@@ -3,6 +3,7 @@ package com.packingmate.service;
 import com.packingmate.domain.ChecklistItem;
 import com.packingmate.dto.ChecklistRequest;
 import com.packingmate.dto.ChecklistResponse;
+import com.packingmate.dto.ChecklistResponse.RecommendationType;
 import com.packingmate.repository.ChecklistItemRepository;
 import com.packingmate.rule.ChecklistRecommendation;
 import com.packingmate.rule.RuleEngine;
@@ -58,8 +59,11 @@ public class ChecklistService {
 
     private ChecklistResponse.Item toResponseItem(ChecklistRecommendation recommendation) {
         ChecklistItem item = recommendation.item();
+        RecommendationType recommendationType = item.requiredTags().isEmpty()
+                ? RecommendationType.BASIC
+                : RecommendationType.CONDITIONAL;
         return new ChecklistResponse.Item(
                 item.itemId(), item.name(), item.aliases(), item.category(), item.scope(),
-                recommendation.quantity(), recommendation.matchedTags(), item.reasonTemplate());
+                recommendation.quantity(), recommendation.matchedTags(), item.reasonTemplate(), recommendationType);
     }
 }
