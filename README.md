@@ -39,6 +39,31 @@ npm run dev
 
 Vite 개발 서버는 `/api` 요청을 `http://localhost:8080`의 백엔드로 전달합니다. 체크리스트 생성을 사용하려면 PostgreSQL을 준비하고 백엔드를 먼저 실행해야 합니다.
 
+## Docker로 실행
+
+Docker Desktop과 Compose v2가 필요합니다. 저장소 루트에서 `.env`를 만들고 예시 비밀번호를 로컬용 값으로 바꿉니다.
+
+```bash
+cp .env.example .env
+```
+
+이미지를 빌드하고 앱과 PostgreSQL을 시작합니다.
+
+```bash
+docker compose config
+docker compose up --build
+```
+
+브라우저에서 [http://localhost:8080](http://localhost:8080)을 엽니다. 프론트엔드 정적 파일은 멀티 스테이지 빌드 중 백엔드 JAR에 포함됩니다. Compose의 DB는 컨테이너 내부 네트워크에서만 접근하고, 앱은 기본적으로 로컬 호스트의 8080 포트에만 공개됩니다. 로컬 Spring Boot가 이미 8080을 사용 중이면 먼저 종료하거나 `.env`의 `APP_PORT`를 다른 호스트 포트로 바꾸세요.
+
+종료할 때는 다른 터미널에서 아래 명령을 실행합니다. 일반 `down`은 PostgreSQL 볼륨을 보존하므로 다음 실행 때 DB가 유지됩니다.
+
+```bash
+docker compose down
+```
+
+`docker compose down -v`는 DB 볼륨과 저장 데이터를 삭제하므로 초기화가 필요할 때만 사용하세요. 앱은 시작할 때 `data.sql`로 기준 시드 테이블을 다시 채웁니다. 이 테이블을 직접 수정한 내용은 앱 재시작 시 보존되지 않습니다.
+
 ## 현재 기능
 
 - 일본·베트남·미국·태국·대만의 목적지와 도시, 여행 기간으로 규칙 기반 체크리스트를 생성합니다.
@@ -59,7 +84,7 @@ Vite 개발 서버는 `/api` 요청을 `http://localhost:8080`의 백엔드로 �
 - 기능 브랜치에서 기능과 관련 테스트를 함께 작성합니다.
 - 테스트는 담당 개발자가 직접 실행하고 결과를 기록합니다.
 
-Gemini 연동과 Docker 실행 설정은 후속 작업입니다.
+Gemini 연동은 MVP 이후 확장 기능입니다.
 
 ## 외부 자료와 배포 전 확인
 
