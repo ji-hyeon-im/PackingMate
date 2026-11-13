@@ -41,7 +41,7 @@ INSERT INTO checklist_item (
     ('phone', '휴대전화', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 1, '연락, 지도, 예약 정보 확인에 사용합니다.'),
     ('phone-charger', '휴대전화 충전기', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 1, '휴대전화 배터리를 충전합니다.'),
     ('charging-cable', '충전 케이블', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 2, '기기를 충전할 때 필요합니다.'),
-    ('power-bank', '보조 배터리', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 1, '외출 중 기기 배터리를 보충할 수 있습니다.'),
+    ('power-bank', '보조 배터리', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 1, '기내 반입 수량과 보관 기준은 출발 전 공항·항공사 최신 안내를 확인하세요.'),
     ('earphones', '이어폰', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 1, '이동 중 오디오를 듣거나 통화할 때 사용할 수 있습니다.'),
     ('camera', '카메라', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 1, '사진 촬영이 필요한 경우 사용할 수 있습니다.'),
     ('camera-battery', '카메라 배터리', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 2, '카메라 사용 시간이 길어질 때 예비 전원을 제공합니다.'),
@@ -92,19 +92,23 @@ INSERT INTO checklist_item_alias (item_id, alias) VALUES
     ('travel-adapter', '멀티 어댑터')
 ON CONFLICT DO NOTHING;
 
+-- 과거 시드에서 더위 조건이던 자외선 보호 항목을 새 근거 태그로 옮긴다.
+DELETE FROM checklist_item_required_tag
+WHERE item_id IN ('hat', 'sunscreen', 'sunglasses') AND tag = 'temp:hot';
+
 INSERT INTO checklist_item_required_tag (item_id, tag) VALUES
     ('warm-jacket', 'temp:cold'),
     ('rain-jacket', 'weather:rain'),
     ('swimsuit', 'activity:swimming'),
     ('trekking-shoes', 'activity:trekking'),
-    ('hat', 'temp:hot'),
+    ('hat', 'weather:uv-protection'),
     ('scarf', 'temp:cold'),
-    ('sunscreen', 'temp:hot'),
+    ('sunscreen', 'weather:uv-protection'),
     ('camera', 'personal:camera'),
     ('camera-battery', 'personal:camera'),
     ('glasses', 'personal:glasses'),
     ('motion-sickness-medicine', 'activity:long-transfer'),
-    ('sunglasses', 'temp:hot'),
+    ('sunglasses', 'weather:uv-protection'),
     ('umbrella', 'weather:rain'),
     ('travel-adapter', 'power:plug-mismatch')
 ON CONFLICT DO NOTHING;
