@@ -4,14 +4,17 @@ import com.packingmate.domain.ChecklistItem;
 import com.packingmate.dto.ChecklistRequest;
 import com.packingmate.dto.ChecklistResponse;
 import com.packingmate.dto.ChecklistResponse.RecommendationType;
+import com.packingmate.dto.WeatherSummary;
 import com.packingmate.repository.ChecklistItemRepository;
 import com.packingmate.rule.ChecklistRecommendation;
 import com.packingmate.rule.RuleEngine;
 import com.packingmate.rule.RuleInput;
+import com.packingmate.service.weather.WeatherService;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /** 입력 검증 후 저장된 규칙과 규칙 엔진을 연결한다. */
@@ -20,12 +23,24 @@ public class ChecklistService {
     private final ChecklistItemRepository checklistItemRepository;
     private final RuleEngine ruleEngine;
     private final CountryCatalog countryCatalog;
+    private final WeatherService weatherService;
 
+    @Autowired
+    public ChecklistService(ChecklistItemRepository checklistItemRepository, RuleEngine ruleEngine,
+            CountryCatalog countryCatalog, WeatherService weatherService) {
+        this.checklistItemRepository = Objects.requireNonNull(checklistItemRepository);
+        this.ruleEngine = Objects.requireNonNull(ruleEngine);
+        this.countryCatalog = Objects.requireNonNull(countryCatalog);
+        this.weatherService = Objects.requireNonNull(weatherService);
+    }
+
+    /** 테스트 및 외부 연동이 없는 기존 호출부의 호환 생성자. */
     public ChecklistService(ChecklistItemRepository checklistItemRepository, RuleEngine ruleEngine,
             CountryCatalog countryCatalog) {
         this.checklistItemRepository = Objects.requireNonNull(checklistItemRepository);
         this.ruleEngine = Objects.requireNonNull(ruleEngine);
         this.countryCatalog = Objects.requireNonNull(countryCatalog);
+        this.weatherService = null;
     }
 
     public ChecklistResponse generate(ChecklistRequest request) {
@@ -40,28 +55,36 @@ public class ChecklistService {
             throw new InvalidChecklistRequestException("여행 기간이 허용 범위를 초과합니다.");
         }
         int tripDays = (int) days;
+        String city = request.city() == null || request.city().isBlank()
+                ? country.representativeCity()
+                : request.city().trim();
+        WeatherSummary weather = weatherService == null
+                ? WeatherSummary.unavailable()
+                : weatherService.summarize(country.countryCode(), city, request.departureDate(), request.returnDate());
         boolean standardMode = request.mode() == ChecklistRequest.ChecklistMode.STANDARD;
+        Set<String> weatherTags = weather.uvProtectionRecommended()
+                ? Set.of("weather:uv-protection")
+                : Set.of();
         RuleInput ruleInput = new RuleInput(
                 tripDays,
                 request.purposes(),
                 request.activities(),
-                null,
-                false,
+                weather.averageTemperatureCelsius(),
+                weather.rainy(),
                 standardMode ? request.providedLodgingAmenities() : Set.of(),
                 standardMode ? request.personalSituations() : Set.of(),
-                Set.of());
+                weatherTags);
         List<ChecklistItem> items = checklistItemRepository.findAll();
         List<ChecklistResponse.Item> responseItems = ruleEngine.generate(items, ruleInput).stream()
                 .map(this::toResponseItem)
                 .toList();
         return new ChecklistResponse(
                 country.countryCode(),
-                request.city() == null || request.city().isBlank()
-                        ? country.representativeCity()
-                        : request.city().trim(),
+                city,
                 tripDays,
                 request.travelers(),
-                responseItems);
+                responseItems,
+                weather);
     }
 
     private ChecklistResponse.Item toResponseItem(ChecklistRecommendation recommendation) {

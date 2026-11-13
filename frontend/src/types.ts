@@ -1,6 +1,17 @@
 export type ChecklistMode = 'SIMPLE' | 'STANDARD'
 export type ItemScope = 'PERSONAL' | 'SHARED'
 export type RecommendationType = 'BASIC' | 'CONDITIONAL'
+export type WeatherSource = 'OPEN_METEO' | 'NASA_POWER' | 'MIXED' | 'PARTIAL_OPEN_METEO' | 'UNAVAILABLE'
+
+export interface WeatherSummary {
+  source: WeatherSource
+  averageTemperatureCelsius: number | null
+  rainy: boolean
+  uvProtectionRecommended: boolean
+  forecastDays: number
+  monthlyAverageDays: number
+  climatologyPeriod: string | null
+}
 export type ItemCategory =
   | 'DOCUMENTS_FINANCE'
   | 'CLOTHING'
@@ -47,6 +58,7 @@ export interface ChecklistResponse {
   tripDays: number
   travelers: number
   items: ChecklistItem[]
+  weather?: WeatherSummary
 }
 
 export interface SavedChecklist {
