@@ -21,10 +21,10 @@ JSON 요청을 검증하고 현재 DB의 준비물 규칙과 규칙 엔진으로
 
 | 필드 | 규칙 |
 |---|---|
-| `countryCode` | 필수 ISO 3166-1 alpha-2 형식. 아직 지원 국가 카탈로그가 없으므로 현재는 형식만 검증 |
+| `countryCode` | 필수 ISO 3166-1 alpha-2 두 글자 형식. 아직 공식 국가 코드 목록을 연결하지 않아 실제 할당·지원 여부는 검증하지 않음 |
 | `city` | 선택, 최대 100자 |
 | `departureDate`, `returnDate` | 필수 날짜, 귀국일은 출발일 뒤 |
-| `travelers` | 1~20명. 설계에 범위가 없어 API 초안에서 상한 20명을 선택했으며 추후 확정 필요 |
+| `travelers` | 필수 정수, 1명 이상. 공동용 준비물 수량 산정에는 사용하지 않음 |
 | `mode` | `SIMPLE` 또는 `STANDARD` |
 | `purposes`, `activities`, `providedLodgingAmenities`, `personalSituations` | 필수 배열(없으면 빈 배열), 영문·숫자·하이픈 토큰 |
 

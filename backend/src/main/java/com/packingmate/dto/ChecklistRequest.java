@@ -1,6 +1,5 @@
 package com.packingmate.dto;
 
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,7 +16,7 @@ public record ChecklistRequest(
         @Size(max = 100) String city,
         @NotNull LocalDate departureDate,
         @NotNull LocalDate returnDate,
-        @NotNull @Min(1) @Max(20) Integer travelers,
+        @NotNull @Min(1) Integer travelers,
         @NotNull ChecklistMode mode,
         @NotNull Set<@NotBlank @Size(max = 60) @Pattern(regexp = "[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*") String> purposes,
         @NotNull Set<@NotBlank @Size(max = 60) @Pattern(regexp = "[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*") String> activities,

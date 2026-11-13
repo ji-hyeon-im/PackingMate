@@ -1,0 +1,47 @@
+# PackingMate 출처 및 설계 기준
+
+확인일: 2026-11-13
+
+현재 애플리케이션은 외부 국가·기후·전압 데이터셋이나 날씨·Gemini API를 아직 불러오지 않습니다. 아래 항목은 공식 근거의 적용 상태와 서비스 자체 결정을 구분해 기록합니다.
+
+## 1. 공식 출처로 확인해 적용한 설계·DB·규칙
+
+| 적용 대상 | 근거 | 적용 상태 |
+|---|---|---|
+| 목적지 국가 코드 형식 (`ChecklistRequest`, 입력 UI) | [ISO 3166 용어집](https://www.iso.org/glossary-for-iso-3166.html)은 alpha-2를 국가명을 나타내는 두 글자 코드로 설명합니다. | 두 글자 형식만 검증합니다. ISO에 실제 할당된 코드인지, 서비스 지원 국가인지는 아직 검증하지 않습니다. 전체 국가 목록을 사용한 건 아닙니다. |
+| 선크림·모자·선글라스 규칙 (`data.sql`) | [WHO 자외선 지침](https://www.who.int/news-room/fact-sheets/detail/ultraviolet-radiation)은 UVI 3 이상에서 자외선 보호를 권고합니다. [Open-Meteo 문서](https://open-meteo.com/en/docs)는 일별 `uv_index_max` 및 시간별 `uv_index` 변수를 제공합니다. | 기존 기온 기반 `temp:hot` 연결을 `weather:uv-protection`으로 바꿨습니다. UVI 3 이상 판정과 태그 생성은 아직 코드에 연결되지 않아 추천은 동작하지 않습니다. 날씨 연동에서 연결해야 합니다. |
+| 보조 배터리 준비 안내 (`data.sql`) | [인천국제공항의 보조 배터리 안내](https://www.airport.kr/ap_ko/1011/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGYXBfa28lMkYxNzUlMkYxMzkzNzYlMkZhcnRjbFZpZXcuZG8lM0ZwYWdlJTNEMSUyNmZpbmRUeXBlJTNEJTI2ZmluZFdvcmQlM0QlMjZyZ3NFbmRkZGVTdHIlM0QlMjZyZ3NFbmRkZWVTdHIlM0QlMjY%3D)는 시행일이 있는 기준을 공지합니다. | 변동 가능한 Wh·개수 제한을 시드에 고정하지 않고, 출발 전 공항·항공사의 최신 안내를 확인하라는 문구를 넣었습니다. |
+
+## 2. 추후 연결할 공식 출처
+
+| 작업 | 공식 출처 | 연결할 내용 |
+|---|---|---|
+| 국가 카탈로그 (`feat/country-catalog`) | [ISO 3166](https://www.iso.org/iso-3166-country-codes.html) | 초기 지원 국가 목록과 ISO 코드의 실제 할당을 확인합니다. ISO 코드 전체와 Packify에서 지원할 국가 집합은 구분합니다. 국가명·코드 데이터에는 출처와 확인일을 기록합니다. |
+| 일반 준비물·국가별 여행 규정 DB | [외교부 해외안전여행](https://www.0404.go.kr/) 및 목적지별 정부·공관 안내 | 현재 `data.sql`의 준비물 52개는 수작업 초안이며 외교부 데이터를 복사한 것이 아닙니다. DB 작성 시 항목별로 확인한 출처 URL과 확인일을 저장합니다. 여권·입국·약품 반입 규정은 일반 준비물과 분리해 목적지별 공식 안내를 연결합니다. 홈페이지 주소만 전체 목록의 출처로 취급하지 않습니다. |
+| 월평균 기후 fallback | [기상청 세계 기후평년값](https://data.kma.go.kr/climate/average30Years/selectAverage30YearsWorldList.do?pgmNo=560) | 월별 평년 기온·강수량을 가져오기 전에 대상 도시 제공 여부, 데이터 기준 기간, 사용 조건을 확인합니다. 각 데이터 행에 도시/관측 지점, 기간, 출처 URL, 확인일을 기록합니다. |
+| 실시간 예보·UV | [Open-Meteo Forecast API](https://open-meteo.com/en/docs) | 설계상 예보는 최대 16일입니다. 여행 기간에 따라 예보 범위와 KMA 월평균 fallback을 나누는 것은 서비스 정책이며, API가 정한 fallback 규칙은 아닙니다. 사용 조건·라이선스도 연동·배포 전에 확인합니다. |
+| 전압·플러그 | 대상 국가의 공식 전력·표준 기관 또는 검증 가능한 표준기관 자료 | 아직 출처와 국가별 값이 정해지지 않았습니다. 전압·주파수·플러그 타입 및 출처 URL·확인일을 함께 저장합니다. |
+| Gemini 추천 | [구조화 출력 문서](https://ai.google.dev/gemini-api/docs/structured-output), [API 호출 한도](https://ai.google.dev/gemini-api/docs/rate-limits) | JSON Schema 일부만 지원되므로 응답을 애플리케이션에서 다시 검증합니다. 모델·계정 등급별 한도는 변할 수 있어 실제 연결 시 최신 문서와 계정 값을 확인합니다. |
+| 항공 수하물 안전 안내 | [인천국제공항 안내](https://www.airport.kr/) 및 이용 항공사 공지 | 보조 배터리 등 시점·항공사별 규정은 고정 시드로 단정하지 않고, 사용자에게 최신 안내 확인을 제공하거나 갱신 가능한 데이터로 관리합니다. |
+
+## 3. PackingMate 자체 설계 사항
+
+아래 값은 공식 표준이나 외부 데이터가 아니라 제품 규칙입니다. 현재 동작을 설명하기 위해 남기며, 공식 권고처럼 표시하지 않습니다.
+
+| 적용 위치 | 자체 결정 | 상태 |
+|---|---|---|
+| `data.sql`, `QuantityRule` | 준비물 52개, 별칭, 태그, 이유 문구, 개인용·공동용 분류 | 수작업 초안. DB를 만들 때 항목별 근거를 확인하고 출처 메타데이터를 추가할 예정입니다. |
+| `QuantityRule`, `data.sql` | 속옷·양말은 일수+여분, 상의 2일당 1벌, 하의 3일당 1벌, 소모품 묶음 및 항목별 `max_quantity` | 추천용 휴리스틱입니다. 사용자 조정 가능하며 공식 권장 수량이 아닙니다. |
+| `TagGenerator` | `cold <= 10°C`, `hot >= 25°C`, 나머지는 `mild` | 설계 초안에서 정한 기온 분류 휴리스틱입니다. 기상청 위험특보나 보편적 복장 기준이 아닙니다. |
+| `ChecklistService` | 출발일과 귀국일을 모두 포함해 여행 일수 계산 | 준비물 수량 계산을 위한 제품 규칙입니다. 외부 표준이 아닙니다. |
+| API 입력 검증 | 인원 1명 이상, 도시 최대 100자, 토큰 최대 60자 | 서비스 요청 검증값입니다. 공식 인원·도시·태그 길이 기준은 아닙니다. 근거 없던 인원 상한 20명은 두지 않습니다. |
+| 규칙 엔진 | 필요 태그 OR 매칭, 제외 태그 우선, 중복 병합, 공동용 기본 수량 1개 | 제품 요구사항입니다. 공동용 수량은 결과에서 사용자가 조정할 수 있습니다. |
+| 결과 UI | 사용자가 조정한 항목 수량은 1 이상, 별도 상한 없음. 사용자 추가 항목은 1개로 시작 | UI 동작입니다. 근거 없던 99개 제한은 제거했습니다. |
+| 여행 정보 UI | SIMPLE/STANDARD 모드, 목적·활동·숙소·개인 상황 선택지 | 설계와 시드 태그에 맞춘 제품 선택지입니다. 모든 선택지가 현재 시드 항목을 바꾸는 것은 아닙니다. |
+
+## 적용 전 확인이 필요한 연결 상태
+
+- 체크리스트 API는 현재 평균 기온을 `null`, 강수를 `false`, 외부 추가 태그를 빈 집합으로 전달합니다. 기온·강수·전압·UV 태그가 결과에 반영되지 않습니다.
+- `travel-adapter`에는 국가별 전압·플러그 자료가 없어 매칭 조건이 생성되지 않습니다.
+- `activity:long-transfer`, `activity:no-water-activities`는 현재 UI/API에서 생성되지 않습니다. `purpose:business`, `activity:ski`도 준비물 시드에서 사용하는 규칙이 없습니다. 관련 태그 행을 유지·삭제·보완할지 정리가 필요합니다.
+- 테스트 개선 기록에는 실행한 테스트의 기대·실제 결과와 수정·재시험만 씁니다. 출처 검토 결론이나 실행하지 않은 테스트 결과는 이 문서 또는 테스트 기록에 사실대로 구분합니다.

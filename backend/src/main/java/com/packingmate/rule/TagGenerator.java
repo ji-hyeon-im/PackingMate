@@ -13,9 +13,6 @@ public class TagGenerator {
 
         input.purposes().forEach(value -> tags.add("purpose:" + value));
         input.activities().forEach(value -> tags.add("activity:" + value));
-        if (input.tripDays() >= 8) {
-            tags.add("duration:long");
-        }
         if (input.averageTemperatureCelsius() != null) {
             tags.add(temperatureTag(input.averageTemperatureCelsius()));
         }

@@ -11,7 +11,7 @@ class TagGeneratorTest {
     private final TagGenerator tagGenerator = new TagGenerator();
 
     @Test
-    void generatesFlightDurationWeatherLodgingPersonalAndPowerTags() {
+    void generatesFlightWeatherLodgingPersonalAndPowerTags() {
         RuleInput input = new RuleInput(
                 8,
                 Set.of("business"),
@@ -28,7 +28,6 @@ class TagGeneratorTest {
                 "transport:flight",
                 "purpose:business",
                 "activity:trekking",
-                "duration:long",
                 "temp:cold",
                 "weather:rain",
                 "lodging:shampoo-provided",
