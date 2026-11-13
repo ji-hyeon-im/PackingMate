@@ -1,5 +1,6 @@
 export type ChecklistMode = 'SIMPLE' | 'STANDARD'
 export type ItemScope = 'PERSONAL' | 'SHARED'
+export type RecommendationType = 'BASIC' | 'CONDITIONAL'
 export type ItemCategory =
   | 'DOCUMENTS_FINANCE'
   | 'CLOTHING'
@@ -7,6 +8,12 @@ export type ItemCategory =
   | 'ELECTRONICS'
   | 'MEDICINE_HEALTH'
   | 'SAFETY_OTHER'
+
+export interface CountryOption {
+  countryCode: string
+  name: string
+  representativeCity: string
+}
 
 export interface ChecklistRequest {
   countryCode: string
@@ -30,6 +37,7 @@ export interface ChecklistItem {
   quantity: number
   matchedTags: string[]
   reasonTemplate: string
+  recommendationType?: RecommendationType
   userAdded?: boolean
 }
 

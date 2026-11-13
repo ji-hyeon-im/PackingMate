@@ -1,4 +1,4 @@
-import type { ChecklistRequest, ChecklistResponse } from '../types'
+import type { ChecklistRequest, ChecklistResponse, CountryOption } from '../types'
 
 interface ApiError {
   code?: string
@@ -20,4 +20,21 @@ export async function createChecklist(request: ChecklistRequest): Promise<Checkl
   }
 
   return (await response.json()) as ChecklistResponse
+}
+
+export async function getCountries(): Promise<CountryOption[]> {
+  const response = await fetch('/api/v1/countries')
+  if (!response.ok) throw new Error('지원 국가 목록을 불러오지 못했습니다.')
+  const countries: unknown = await response.json()
+  if (!Array.isArray(countries) || !countries.every(isCountryOption)) {
+    throw new Error('지원 국가 목록 응답 형식이 올바르지 않습니다.')
+  }
+  return countries
+}
+
+function isCountryOption(value: unknown): value is CountryOption {
+  return typeof value === 'object' && value !== null &&
+    typeof (value as CountryOption).countryCode === 'string' &&
+    typeof (value as CountryOption).name === 'string' &&
+    typeof (value as CountryOption).representativeCity === 'string'
 }
