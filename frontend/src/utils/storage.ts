@@ -1,4 +1,4 @@
-import type { SavedChecklist } from '../types'
+import type { SavedChecklist, WeatherSummary } from '../types'
 
 const STORAGE_KEY = 'packingmate.checklist.v1'
 
@@ -43,7 +43,8 @@ function isChecklistResponse(value: unknown): boolean {
     (value.city === null || isString(value.city)) &&
     Number.isInteger(value.tripDays) && Number(value.tripDays) >= 1 &&
     Number.isInteger(value.travelers) && Number(value.travelers) >= 1 &&
-    Array.isArray(value.items) && value.items.every(isChecklistItem)
+    Array.isArray(value.items) && value.items.every(isChecklistItem) &&
+    (value.weather === undefined || isWeatherSummary(value.weather))
 }
 
 function isChecklistItem(value: unknown): boolean {
@@ -67,4 +68,16 @@ function isString(value: unknown): value is string {
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(isString)
+}
+
+function isWeatherSummary(value: unknown): value is WeatherSummary {
+  if (!isRecord(value)) return false
+  const source = ['OPEN_METEO', 'NASA_POWER', 'MIXED', 'PARTIAL_OPEN_METEO', 'UNAVAILABLE'].includes(String(value.source))
+  const temperatureValid = value.averageTemperatureCelsius === null ||
+    (typeof value.averageTemperatureCelsius === 'number' && Number.isFinite(value.averageTemperatureCelsius))
+  return source && temperatureValid && typeof value.rainy === 'boolean' &&
+    typeof value.uvProtectionRecommended === 'boolean' &&
+    Number.isInteger(value.forecastDays) && Number(value.forecastDays) >= 0 &&
+    Number.isInteger(value.monthlyAverageDays) && Number(value.monthlyAverageDays) >= 0 &&
+    (value.climatologyPeriod === null || isString(value.climatologyPeriod))
 }

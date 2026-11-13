@@ -2,7 +2,7 @@
 
 확인일: 2026-11-13
 
-현재 애플리케이션은 외부 국가·기후·전압 데이터셋이나 날씨·Gemini API를 아직 불러오지 않습니다. 아래 항목은 공식 근거의 적용 상태와 서비스 자체 결정을 구분해 기록합니다.
+현재 애플리케이션은 날씨 조회에 Open-Meteo와 NASA POWER를 사용합니다. 외부 국가·전압 데이터셋과 Gemini API는 아직 연결하지 않았습니다. 아래 항목은 공식 근거의 적용 상태와 서비스 자체 결정을 구분해 기록합니다.
 
 ## 지원 국가 목록과 선정 기준
 
@@ -23,7 +23,7 @@ UI에는 국가 이름을 표시하고, API 경계에서는 ISO 3166-1 alpha-2 �
 | 적용 대상 | 근거 | 적용 상태 |
 |---|---|---|
 | 국가 코드와 지원 국가 (`CountryCatalog`, `/api/v1/countries`, 입력 UI) | [ISO 3166 용어집](https://www.iso.org/glossary-for-iso-3166.html)은 alpha-2를 국가명을 나타내는 두 글자 코드로 설명합니다. 지원 국가 수요 기준은 [한국관광공사 목적지 통계](https://datalab.visitkorea.or.kr/site/portal/ex/bbs/View.do?cbIdx=1127&bcIdx=311491)입니다. | ISO 코드와 서비스 지원 목록을 분리합니다. 초기 지원은 일본(JP), 베트남(VN), 미국(US), 태국(TH), 대만(TW) 다섯 곳이며 서버도 이 목록만 허용합니다. 방문 수는 설계 문서에 기록된 2026년 1~9월 누계값을 사용했으며 이번 코드 변경에서 원자료를 다시 확인하지 않았습니다. |
-| 선크림·모자·선글라스 규칙 (`data.sql`) | [WHO 자외선 지침](https://www.who.int/news-room/fact-sheets/detail/ultraviolet-radiation)은 UVI 3 이상에서 자외선 보호를 권고합니다. [Open-Meteo 문서](https://open-meteo.com/en/docs)는 일별 `uv_index_max` 및 시간별 `uv_index` 변수를 제공합니다. | 기존 기온 기반 `temp:hot` 연결을 `weather:uv-protection`으로 바꿨습니다. UVI 3 이상 판정과 태그 생성은 아직 코드에 연결되지 않아 추천은 동작하지 않습니다. 날씨 연동에서 연결해야 합니다. |
+| 선크림·모자·선글라스 규칙 (`data.sql`) | [WHO 자외선 지침](https://www.who.int/news-room/fact-sheets/detail/ultraviolet-radiation)은 UVI 3 이상에서 자외선 보호를 권고합니다. [Open-Meteo 문서](https://open-meteo.com/en/docs)는 일별 `uv_index_max` 및 시간별 `uv_index` 변수를 제공합니다. | 기온 기준 대신 예보의 일 최고 UVI 또는 NASA POWER 월평균 UVI 3 이상에서 `weather:uv-protection` 태그를 생성합니다. 예보 UVI 기준은 WHO 권고를 참고하며 월평균 UVI 적용은 서비스의 fallback 휴리스틱입니다. |
 | 보조 배터리 준비 안내 (`data.sql`) | [인천국제공항의 보조 배터리 안내](https://www.airport.kr/ap_ko/1011/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGYXBfa28lMkYxNzUlMkYxMzkzNzYlMkZhcnRjbFZpZXcuZG8lM0ZwYWdlJTNEMSUyNmZpbmRUeXBlJTNEJTI2ZmluZFdvcmQlM0QlMjZyZ3NFbmRkZGVTdHIlM0QlMjZyZ3NFbmRkZWVTdHIlM0QlMjY%3D)는 시행일이 있는 기준을 공지합니다. | 변동 가능한 Wh·개수 제한을 시드에 고정하지 않고, 출발 전 공항·항공사의 최신 안내를 확인하라는 문구를 넣었습니다. |
 
 ## 2. 추후 연결할 공식 출처
@@ -32,8 +32,8 @@ UI에는 국가 이름을 표시하고, API 경계에서는 ISO 3166-1 alpha-2 �
 |---|---|---|
 | 국가 카탈로그 확장 | [ISO 3166](https://www.iso.org/iso-3166-country-codes.html) | 새 국가를 지원할 때 ISO 할당 코드와 서비스 지원 집합을 구분하고, 해당 국가의 대표 도시·공식 데이터 출처를 확인합니다. |
 | 일반 준비물·국가별 여행 규정 DB | [외교부 해외안전여행](https://www.0404.go.kr/) 및 목적지별 정부·공관 안내 | 현재 `data.sql`의 준비물 52개는 수작업 초안이며 외교부 데이터를 복사한 것이 아닙니다. DB 작성 시 항목별로 확인한 출처 URL과 확인일을 저장합니다. 여권·입국·약품 반입 규정은 일반 준비물과 분리해 목적지별 공식 안내를 연결합니다. 홈페이지 주소만 전체 목록의 출처로 취급하지 않습니다. |
-| 월평균 기후 fallback | [기상청 세계 기후평년값](https://data.kma.go.kr/climate/average30Years/selectAverage30YearsWorldList.do?pgmNo=560) | 월별 평년 기온·강수량을 가져오기 전에 대상 도시 제공 여부, 데이터 기준 기간, 사용 조건을 확인합니다. 각 데이터 행에 도시/관측 지점, 기간, 출처 URL, 확인일을 기록합니다. |
-| 실시간 예보·UV | [Open-Meteo Forecast API](https://open-meteo.com/en/docs) | 설계상 예보는 최대 16일입니다. 여행 기간에 따라 예보 범위와 KMA 월평균 fallback을 나누는 것은 서비스 정책이며, API가 정한 fallback 규칙은 아닙니다. 사용 조건·라이선스도 연동·배포 전에 확인합니다. |
+| 월평균 기후 fallback 출처 검토 | [기상청 세계 기후평년값](https://data.kma.go.kr/climate/average30Years/selectAverage30YearsWorldList.do?pgmNo=560) | 지점 자료는 사용자가 입력할 수 있는 모든 도시를 보장하지 않아 fallback 제공자로 선택하지 않았습니다. 이번 구현은 NASA POWER의 좌표별 climatology API를 사용합니다. 결정 근거는 `docs/decisions/2026-11-13-weather-fallback-source.md`에 기록했습니다. |
+| 실시간 예보·UV | [Open-Meteo Forecast API](https://open-meteo.com/en/docs) | 현재 최대 16일 예보로 구현했습니다. 범위 밖 날짜 및 예보 실패 시 NASA POWER 월평균 자료로 대체하는 것은 서비스 흐름입니다. 무료 API의 비상업 이용 및 CC BY 4.0 조건을 확인했으며 상용 배포 전 최신 이용 조건을 다시 확인해야 합니다. |
 | 전압·플러그 | 대상 국가의 공식 전력·표준 기관 또는 검증 가능한 표준기관 자료 | 아직 출처와 국가별 값이 정해지지 않았습니다. 전압·주파수·플러그 타입 및 출처 URL·확인일을 함께 저장합니다. |
 | Gemini 추천 | [구조화 출력 문서](https://ai.google.dev/gemini-api/docs/structured-output), [API 호출 한도](https://ai.google.dev/gemini-api/docs/rate-limits) | JSON Schema 일부만 지원되므로 응답을 애플리케이션에서 다시 검증합니다. 모델·계정 등급별 한도는 변할 수 있어 실제 연결 시 최신 문서와 계정 값을 확인합니다. |
 | 항공 수하물 안전 안내 | [인천국제공항 안내](https://www.airport.kr/) 및 이용 항공사 공지 | 보조 배터리 등 시점·항공사별 규정은 고정 시드로 단정하지 않고, 사용자에게 최신 안내 확인을 제공하거나 갱신 가능한 데이터로 관리합니다. |
@@ -55,10 +55,25 @@ UI에는 국가 이름을 표시하고, API 경계에서는 ISO 3166-1 alpha-2 �
 | 결과 UI | 사용자가 조정한 항목 수량은 1 이상, 별도 상한 없음. 사용자 추가 항목은 1개로 시작 | UI 동작입니다. 근거 없던 99개 제한은 제거했습니다. |
 | 여행 정보 UI | SIMPLE/STANDARD 모드, 목적·활동·숙소·개인 상황 선택지 | 설계와 시드 태그에 맞춘 제품 선택지입니다. 모든 선택지가 현재 시드 항목을 바꾸는 것은 아닙니다. |
 
-## 적용 전 확인이 필요한 연결 상태
+## 아직 연결하지 않은 기능
 
-- 체크리스트 API는 현재 평균 기온을 `null`, 강수를 `false`, 외부 추가 태그를 빈 집합으로 전달합니다. 기온·강수·전압·UV 태그가 결과에 반영되지 않습니다.
-- 도시 이름은 현재 날씨 조회에 사용되지 않습니다. 지오코딩 연결 전에는 국가와 도시의 불일치 또는 오타를 검출할 수 없습니다.
+- 날씨 기능은 연결했습니다. 지오코딩에서 국가 코드를 제한하며 결과가 없는 도시는 재입력을 요청합니다.
+- 전압·플러그 기준 데이터와 Gemini API는 아직 연결하지 않았습니다.
 - `travel-adapter`에는 국가별 전압·플러그 자료가 없어 매칭 조건이 생성되지 않습니다.
 - `activity:long-transfer`, `activity:no-water-activities`는 현재 UI/API에서 생성되지 않습니다. `purpose:business`, `activity:ski`도 준비물 시드에서 사용하는 규칙이 없습니다. 관련 태그 행을 유지·삭제·보완할지 정리가 필요합니다.
-- 테스트 개선 기록에는 실행한 테스트의 기대·실제 결과와 수정·재시험만 씁니다. 출처 검토 결론이나 실행하지 않은 테스트 결과는 이 문서 또는 테스트 기록에 사실대로 구분합니다.
+- 날씨 연동 후 확인된 출처와 서비스 휴리스틱은 아래 날씨 연동 절에 기록합니다.
+
+## 날씨 연동 (확인일: 2026-11-13)
+
+| 적용 대상 | 출처 | 적용 상태 |
+|---|---|---|
+| 도시 좌표 및 최대 16일 예보 | [Open-Meteo Geocoding API](https://open-meteo.com/en/docs/geocoding-api), [Forecast API](https://open-meteo.com/en/docs) | 지오코딩 요청에 목적지 ISO alpha-2 국가 코드를 전달해 국가를 제한합니다. 일별 평균 기온, 액체 강수량, 일 최고 UV 지수를 사용합니다. 입력 도시·국가 코드는 Open-Meteo 지오코딩 요청에, 지오코딩 좌표는 예보와 NASA POWER 조회에 사용합니다. 여행 날짜는 서버 내에서만 처리하며 외부로 전송하지 않습니다. |
+| 예보 범위 초과 또는 예보 실패 대체 | [NASA POWER Climatology API](https://power.larc.nasa.gov/docs/services/api/temporal/climatology/) | 전 지리 좌표의 월별 평균을 조회합니다. 확인한 현재 응답 기간은 2001년 1월~2025년 12월이며 응답의 기간 값을 API와 화면에 전달합니다. 기상 변수는 MERRA-2, `ALLSKY_SFC_UV_INDEX`는 NASA POWER 응답에 명시된 소스에 따릅니다. |
+| 자외선 보호 기준 | [WHO Ultraviolet radiation](https://www.who.int/news-room/fact-sheets/detail/ultraviolet-radiation) | WHO는 UVI 3 이상에서 보호를 권고합니다. 예보는 일 최고 UVI, NASA 월평균 fallback은 월평균 UVI를 사용합니다. 월평균값은 개별 날짜의 최고 UVI 예보와 같지 않으며, 월평균 UVI 3 이상에 따른 항목 추천은 대체 자료용 제품 적용입니다. |
+| Open-Meteo 이용 조건 | [Terms of Use](https://open-meteo.com/en/terms) | 확인 당시 무료 API는 비상업적 이용으로 제한되고 CC BY 4.0 조건이 적용됩니다. 상용 배포 전 최신 약관 및 유료 API 필요 여부를 다시 확인해야 합니다. |
+
+KMA 세계기후평년값은 도시별 지점 자료이므로 지원 국가의 대표 도시와 사용자가 입력하는 모든 도시를 포괄하지 못해 이번 fallback 출처로 채택하지 않았습니다. NASA POWER Climatology API는 좌표를 입력해 전 세계 월평균 자료를 반환하므로 지오코딩 좌표에서 동적으로 조회합니다. 기후 자료는 DB에 복사·시드하지 않고 API 응답 기간을 결과에 표시합니다.
+
+날씨가 예보와 fallback을 모두 사용하면 날짜 수로 가중해 여행 기간 평균 기온을 계산합니다. 예보 또는 NASA 월평균 fallback에서 하루 강수량이 1.0mm 이상일 때 `weather:rain`을 생성합니다. 1.0mm 기준은 공식 강수 경보 기준이 아닌 서비스 휴리스틱입니다. NASA 월평균의 `PRECTOTCORR` 단위는 mm/day입니다. 예보의 일 최고 UVI 또는 NASA POWER 월평균 UVI가 3 이상이면 `weather:uv-protection`을 생성합니다. 기존 기온 분류(`cold <= 10°C`, `hot >= 25°C`)는 여행 기간 평균 기온에 적용하는 제품 휴리스틱입니다.
+
+외부 호출 실패 시 규칙 엔진 결과는 반환하며, 날씨 자료가 전혀 없으면 기온·강수·UV 조건 태그를 추가하지 않고 결과에 `UNAVAILABLE`을 표시합니다. 일부 예보만 있고 NASA fallback이 실패하면 확인 가능한 예보 날짜만 적용하고 `PARTIAL_OPEN_METEO`로 표시합니다.

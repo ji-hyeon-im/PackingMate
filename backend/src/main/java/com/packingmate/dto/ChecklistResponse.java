@@ -5,16 +5,23 @@ import com.packingmate.domain.ItemScope;
 import java.util.List;
 import java.util.Set;
 
-/** 규칙 엔진 결과를 전달하는 API 출력 계약. */
+/** 규칙 엔진과 날씨 자료의 체크리스트 결과 계약. */
 public record ChecklistResponse(
         String countryCode,
         String city,
         int tripDays,
         int travelers,
-        List<Item> items
+        List<Item> items,
+        WeatherSummary weather
 ) {
     public ChecklistResponse {
         items = List.copyOf(items);
+        weather = weather == null ? WeatherSummary.unavailable() : weather;
+    }
+
+    /** 기존 서비스 테스트와 내부 생성 호출의 소스 호환을 유지한다. */
+    public ChecklistResponse(String countryCode, String city, int tripDays, int travelers, List<Item> items) {
+        this(countryCode, city, tripDays, travelers, items, WeatherSummary.unavailable());
     }
 
     public record Item(
