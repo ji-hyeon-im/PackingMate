@@ -1,4 +1,4 @@
-import type { SavedChecklist, WeatherSummary } from '../types'
+import type { PowerSummary, SavedChecklist, WeatherSummary } from '../types'
 
 const STORAGE_KEY = 'packingmate.checklist.v1'
 
@@ -44,7 +44,8 @@ function isChecklistResponse(value: unknown): boolean {
     Number.isInteger(value.tripDays) && Number(value.tripDays) >= 1 &&
     Number.isInteger(value.travelers) && Number(value.travelers) >= 1 &&
     Array.isArray(value.items) && value.items.every(isChecklistItem) &&
-    (value.weather === undefined || isWeatherSummary(value.weather))
+    (value.weather === undefined || isWeatherSummary(value.weather)) &&
+    (value.power === undefined || isPowerSummary(value.power))
 }
 
 function isChecklistItem(value: unknown): boolean {
@@ -80,4 +81,27 @@ function isWeatherSummary(value: unknown): value is WeatherSummary {
     Number.isInteger(value.forecastDays) && Number(value.forecastDays) >= 0 &&
     Number.isInteger(value.monthlyAverageDays) && Number(value.monthlyAverageDays) >= 0 &&
     (value.climatologyPeriod === null || isString(value.climatologyPeriod))
+}
+
+
+function isPowerSummary(value: unknown): value is PowerSummary {
+  if (!isRecord(value)) return false
+  const suppliesValid = Array.isArray(value.supplies) && value.supplies.every((supply: unknown) =>
+    isRecord(supply) && Number.isInteger(supply.voltage) && Number(supply.voltage) > 0 &&
+    Number.isInteger(supply.frequency) && Number(supply.frequency) > 0 && isString(supply.note))
+  const sourcesValid = Array.isArray(value.sources) && value.sources.every((source: unknown) =>
+    isRecord(source) && (source.kind === 'SUPPLY' || source.kind === 'PLUG') &&
+    isHttpsUrl(source.url) && isString(source.checkedOn))
+  const compatibilityValid = value.plugCompatibility === undefined ||
+    ['COMPATIBLE', 'PARTIAL', 'INCOMPATIBLE'].includes(String(value.plugCompatibility))
+  const legacyCompatibilityValid = value.plugMismatch === undefined || typeof value.plugMismatch === 'boolean'
+  return suppliesValid && isStringArray(value.plugTypes) && compatibilityValid && legacyCompatibilityValid &&
+    (value.plugCompatibility !== undefined || value.plugMismatch !== undefined) &&
+    typeof value.voltageCheckRecommended === 'boolean' &&
+    typeof value.frequencyCheckRecommended === 'boolean' && sourcesValid
+}
+
+
+function isHttpsUrl(value: unknown): value is string {
+  return isString(value) && value.startsWith('https://')
 }

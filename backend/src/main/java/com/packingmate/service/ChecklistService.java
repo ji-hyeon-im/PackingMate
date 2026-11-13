@@ -4,13 +4,16 @@ import com.packingmate.domain.ChecklistItem;
 import com.packingmate.dto.ChecklistRequest;
 import com.packingmate.dto.ChecklistResponse;
 import com.packingmate.dto.ChecklistResponse.RecommendationType;
+import com.packingmate.dto.PowerSummary;
 import com.packingmate.dto.WeatherSummary;
 import com.packingmate.repository.ChecklistItemRepository;
 import com.packingmate.rule.ChecklistRecommendation;
 import com.packingmate.rule.RuleEngine;
 import com.packingmate.rule.RuleInput;
+import com.packingmate.service.power.PowerStandardService;
 import com.packingmate.service.weather.WeatherService;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -24,14 +27,16 @@ public class ChecklistService {
     private final RuleEngine ruleEngine;
     private final CountryCatalog countryCatalog;
     private final WeatherService weatherService;
+    private final PowerStandardService powerStandardService;
 
     @Autowired
     public ChecklistService(ChecklistItemRepository checklistItemRepository, RuleEngine ruleEngine,
-            CountryCatalog countryCatalog, WeatherService weatherService) {
+            CountryCatalog countryCatalog, WeatherService weatherService, PowerStandardService powerStandardService) {
         this.checklistItemRepository = Objects.requireNonNull(checklistItemRepository);
         this.ruleEngine = Objects.requireNonNull(ruleEngine);
         this.countryCatalog = Objects.requireNonNull(countryCatalog);
         this.weatherService = Objects.requireNonNull(weatherService);
+        this.powerStandardService = Objects.requireNonNull(powerStandardService);
     }
 
     /** 테스트 및 외부 연동이 없는 기존 호출부의 호환 생성자. */
@@ -41,6 +46,7 @@ public class ChecklistService {
         this.ruleEngine = Objects.requireNonNull(ruleEngine);
         this.countryCatalog = Objects.requireNonNull(countryCatalog);
         this.weatherService = null;
+        this.powerStandardService = null;
     }
 
     public ChecklistResponse generate(ChecklistRequest request) {
@@ -62,9 +68,16 @@ public class ChecklistService {
                 ? WeatherSummary.unavailable()
                 : weatherService.summarize(country.countryCode(), city, request.departureDate(), request.returnDate());
         boolean standardMode = request.mode() == ChecklistRequest.ChecklistMode.STANDARD;
-        Set<String> weatherTags = weather.uvProtectionRecommended()
-                ? Set.of("weather:uv-protection")
-                : Set.of();
+        PowerSummary power = powerStandardService == null
+                ? PowerSummary.unavailable()
+                : powerStandardService.summarize(country.countryCode());
+        Set<String> additionalTags = new HashSet<>();
+        if (weather.uvProtectionRecommended()) {
+            additionalTags.add("weather:uv-protection");
+        }
+        if (power.plugCompatibility() == PowerSummary.PlugCompatibility.INCOMPATIBLE) {
+            additionalTags.add("power:plug-mismatch");
+        }
         RuleInput ruleInput = new RuleInput(
                 tripDays,
                 request.purposes(),
@@ -73,7 +86,7 @@ public class ChecklistService {
                 weather.rainy(),
                 standardMode ? request.providedLodgingAmenities() : Set.of(),
                 standardMode ? request.personalSituations() : Set.of(),
-                weatherTags);
+                additionalTags);
         List<ChecklistItem> items = checklistItemRepository.findAll();
         List<ChecklistResponse.Item> responseItems = ruleEngine.generate(items, ruleInput).stream()
                 .map(this::toResponseItem)
@@ -84,7 +97,8 @@ public class ChecklistService {
                 tripDays,
                 request.travelers(),
                 responseItems,
-                weather);
+                weather,
+                power);
     }
 
     private ChecklistResponse.Item toResponseItem(ChecklistRecommendation recommendation) {

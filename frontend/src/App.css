@@ -150,3 +150,15 @@
 .weather-notice.average { border-color: #eadbb4; background: #fcf8ed; color: #76633b; }
 .weather-notice.partial, .weather-notice.unavailable { border-color: #e8d0c7; background: #fbf2ef; color: #805744; }
 .weather-notice a { color: inherit; font-weight: 700; text-underline-offset: 2px; }
+
+.power-notice { margin: 10px 0 0; padding: 12px 16px; border: 1px solid #d9e0cb; border-radius: 12px; background: #f5f7ef; color: #53613c; font-size: 12px; line-height: 1.6; }
+.power-notice p { margin: 0; }
+.power-notice p + p { margin-top: 5px; }
+.power-notice .power-warning { color: #805744; font-weight: 700; }
+.power-notice details { margin-top: 7px; font-size: 11px; }
+.power-notice summary { cursor: pointer; font-weight: 600; }
+.power-details { display: grid; grid-template-columns: 64px 1fr; gap: 3px 10px; margin: 8px 0; }
+.power-details dt { font-weight: 600; }
+.power-details dd { margin: 0; }
+.power-notice ul { margin: 4px 0 0; padding-left: 18px; }
+.power-notice a { color: inherit; font-weight: 700; text-underline-offset: 2px; }

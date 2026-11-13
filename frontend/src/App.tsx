@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { createChecklist, getCountries } from './api/checklist'
 import { loadChecklist, saveChecklist } from './utils/storage'
-import type { ChecklistItem, ChecklistRequest, ChecklistResponse, CountryOption, ItemCategory, WeatherSummary } from './types'
+import type { ChecklistItem, ChecklistRequest, ChecklistResponse, CountryOption, ItemCategory, PowerSummary, WeatherSummary } from './types'
 import './App.css'
 
 const categories: { value: ItemCategory; label: string }[] = [
@@ -95,6 +95,12 @@ function App() {
     }])
     setNewItemName('')
   }
+  function addAdapterItem() {
+    setCustomItems((current) => [...current, {
+      itemId: `custom-${crypto.randomUUID()}`, name: '멀티 어댑터', aliases: [], category: 'SAFETY_OTHER',
+      scope: 'SHARED', quantity: 1, matchedTags: [], reasonTemplate: '기기 플러그 모양을 확인한 뒤 필요하면 사용하세요.', userAdded: true,
+    }])
+  }
   function removeCustomItem(itemId: string) {
     setCustomItems((current) => current.filter((item) => item.itemId !== itemId))
     setCheckedIds((current) => { const next = new Set(current); next.delete(itemId); return next })
@@ -139,6 +145,7 @@ function App() {
       <div className="result-heading"><div><span className="eyebrow">PACKING LIST</span><h1>준비물 체크리스트</h1><p>{result.city ? `${result.city}, ` : ''}{responseCountryName ?? result.countryCode} · {result.tripDays}일 · {result.travelers}명</p></div><button className="secondary-button" type="button" onClick={() => { setResult(null); setStep(1) }}>여행 정보 수정</button></div>
       <div className="progress-panel"><div className="progress-copy"><strong>{completedCount} / {allItems.length} 완료</strong><span>체크 상태는 이 브라우저에 저장돼요.</span></div><div className="progress-track"><span style={{ width: `${allItems.length ? completedCount / allItems.length * 100 : 0}%` }} /></div></div>
       {result.weather && <WeatherNotice weather={result.weather} />}
+      {result.power && <PowerNotice power={result.power} adapterAdded={allItems.some((item) => item.name.trim() === '멀티 어댑터')} onAddAdapter={addAdapterItem} />}
       <div className="checklist-columns">{(['PERSONAL', 'SHARED'] as const).map((scope) => { const scopedItems = allItems.filter((item) => item.scope === scope); return <section className="list-section" key={scope}><div className="list-title"><div><span className="eyebrow">{scope === 'PERSONAL' ? 'FOR YOU' : 'SHARE TOGETHER'}</span><h2>{scope === 'PERSONAL' ? '개인용 준비물' : '공동 준비물'}</h2></div><span className="item-count">{scopedItems.length}개</span></div>{scopedItems.length ? <ul className="item-list">{scopedItems.map((item) => <ChecklistRow key={item.itemId} item={item} checked={checkedIds.has(item.itemId)} onToggle={() => toggleChecked(item.itemId)} onRemove={() => removeCustomItem(item.itemId)} onQuantityChange={(change) => adjustQuantity(item.itemId, change)} />)}</ul> : <p className="empty-list">아직 등록된 준비물이 없어요.</p>}</section> })}</div>
       <section className="add-item-panel"><div><span className="eyebrow">MAKE IT YOURS</span><h2>직접 챙길 것도 추가하세요</h2><p>여행 준비물에 나만의 항목을 더할 수 있어요.</p></div><form className="add-item-form" onSubmit={addCustomItem}><label className="sr-only" htmlFor="new-item">추가할 준비물</label><input id="new-item" className="text-input" maxLength={80} placeholder="예: 보조 배터리" value={newItemName} onChange={(event) => setNewItemName(event.target.value)} required /><label className="sr-only" htmlFor="new-category">카테고리</label><select id="new-category" value={newItemCategory} onChange={(event) => setNewItemCategory(event.target.value as ItemCategory)}>{categories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}</select><label className="sr-only" htmlFor="new-scope">준비 범위</label><select id="new-scope" value={newItemScope} onChange={(event) => setNewItemScope(event.target.value as 'PERSONAL' | 'SHARED')}><option value="PERSONAL">개인용</option><option value="SHARED">공동용</option></select><button className="primary-button" type="submit">항목 추가 <span>+</span></button></form></section>
       <div className="result-actions"><button type="button" className="text-button" onClick={startOver}>새 체크리스트 만들기</button><span>진행 상태는 현재 기기에 저장됩니다.</span></div>
@@ -164,6 +171,52 @@ function WeatherNotice({ weather }: { weather: WeatherSummary }) {
     return <p className="weather-notice average" role="status">{temperatureText}예보 범위 밖이어서 NASA POWER 월평균 자료로 대체했습니다{period}. <a href="https://power.larc.nasa.gov/docs/services/api/temporal/climatology/" target="_blank" rel="noreferrer">출처: NASA POWER</a></p>
   }
   return <p className="weather-notice average" role="status">{temperatureText}Open-Meteo 예보 {weather.forecastDays}일과 NASA POWER 월평균 {weather.monthlyAverageDays}일을 함께 사용했습니다{period}. <a href="https://open-meteo.com/en/docs" target="_blank" rel="noreferrer">Open-Meteo</a> · <a href="https://power.larc.nasa.gov/docs/services/api/temporal/climatology/" target="_blank" rel="noreferrer">NASA POWER</a></p>
+}
+
+function PowerNotice({ power, adapterAdded, onAddAdapter }: { power: PowerSummary; adapterAdded: boolean; onAddAdapter: () => void }) {
+  const voltages = [...new Set(power.supplies.map((supply) => supply.voltage))]
+    .sort((left, right) => left - right)
+  const frequencies = [...new Set(power.supplies.map((supply) => supply.frequency))]
+    .sort((left, right) => left - right)
+  const plugTypes = [...new Set(power.plugTypes)].sort()
+  if (voltages.length === 0 && frequencies.length === 0 && plugTypes.length === 0) return null
+  const compatibleTypes = ['C', 'F'].filter((plugType) => power.plugTypes.includes(plugType))
+  const plugCompatibility = power.plugCompatibility ?? (compatibleTypes.length === 2
+    ? 'COMPATIBLE'
+    : compatibleTypes.length === 1 ? 'PARTIAL' : 'INCOMPATIBLE')
+  const differentStandards = [
+    power.voltageCheckRecommended ? '전압' : '',
+    power.frequencyCheckRecommended ? '주파수' : '',
+  ].filter(Boolean)
+  const warningSubject = differentStandards.length === 2
+    ? '전압과 주파수가'
+    : differentStandards[0] === '주파수' ? '주파수가' : '전압이'
+  const notes = [...new Set(power.supplies.map((supply) => supply.note.trim()).filter(Boolean))]
+  return <section className="power-notice" role="status" aria-label="목적지 전압과 플러그 안내">
+    <p><strong>{plugCompatibility === 'COMPATIBLE'
+      ? '한국 플러그와 호환되는 콘센트 유형이 있어요.'
+      : plugCompatibility === 'PARTIAL'
+        ? '기기에 따라 멀티 어댑터가 필요할 수 있어요.'
+        : '호환되는 콘센트 유형이 확인되지 않아 멀티 어댑터 준비를 권장해요.'}</strong></p>
+    {plugCompatibility !== 'COMPATIBLE' && !adapterAdded &&
+      <p><button type="button" className="text-button" onClick={onAddAdapter}>체크리스트에 멀티 어댑터 추가</button></p>}
+    {differentStandards.length > 0 &&
+      <p className="power-warning">{warningSubject} 한국과 달라요. 기기 라벨을 확인하세요.</p>}
+    <details>
+      <summary>전압·플러그 자세히 보기</summary>
+      <dl className="power-details">
+        <dt>전압</dt><dd>{voltages.map((voltage) => `${voltage}V`).join(' / ') || '정보 없음'}</dd>
+        <dt>주파수</dt><dd>{frequencies.map((frequency) => `${frequency}Hz`).join(' / ') || '정보 없음'}</dd>
+        <dt>콘센트</dt><dd>{plugTypes.length > 0 ? `${plugTypes.join(', ')}형` : '정보 없음'}</dd>
+      </dl>
+      {differentStandards.length > 0 &&
+        <p>기기 라벨의 전압·주파수 범위에 목적지 규격이 포함되면 사용할 수 있어요. 예: 100–240V, 50/60Hz. 플러그 어댑터는 전압을 바꾸지 않아요.</p>}
+      {notes.map((note) => <p key={note}>{note}</p>)}
+      {power.sources.length > 0 && <ul>{power.sources.map((source) =>
+        <li key={`${source.kind}-${source.url}`}><a href={source.url} target="_blank" rel="noreferrer">{source.kind === 'SUPPLY' ? '전압·주파수 출처' : '플러그 출처'}</a> · 확인일 {source.checkedOn}</li>
+      )}</ul>}
+    </details>
+  </section>
 }
 
 function Choice({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
