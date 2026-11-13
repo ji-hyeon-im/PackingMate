@@ -174,16 +174,12 @@ function WeatherNotice({ weather }: { weather: WeatherSummary }) {
 }
 
 function PowerNotice({ power, adapterAdded, onAddAdapter }: { power: PowerSummary; adapterAdded: boolean; onAddAdapter: () => void }) {
-  const suppliesByVoltage = new Map<number, Set<number>>()
-  for (const supply of power.supplies) {
-    const frequencies = suppliesByVoltage.get(supply.voltage) ?? new Set<number>()
-    frequencies.add(supply.frequency)
-    suppliesByVoltage.set(supply.voltage, frequencies)
-  }
-  const supplyText = [...suppliesByVoltage.entries()]
-    .map(([voltage, frequencies]) => `${voltage}V · ${[...frequencies].sort((a, b) => a - b).join('/')}Hz`)
-    .join(' · ')
-  if (!supplyText && power.plugTypes.length === 0) return null
+  const voltages = [...new Set(power.supplies.map((supply) => supply.voltage))]
+    .sort((left, right) => left - right)
+  const frequencies = [...new Set(power.supplies.map((supply) => supply.frequency))]
+    .sort((left, right) => left - right)
+  const plugTypes = [...new Set(power.plugTypes)].sort()
+  if (voltages.length === 0 && frequencies.length === 0 && plugTypes.length === 0) return null
   const compatibleTypes = ['C', 'F'].filter((plugType) => power.plugTypes.includes(plugType))
   const plugCompatibility = power.plugCompatibility ?? (compatibleTypes.length === 2
     ? 'COMPATIBLE'
@@ -191,18 +187,35 @@ function PowerNotice({ power, adapterAdded, onAddAdapter }: { power: PowerSummar
   const differentStandards = [
     power.voltageCheckRecommended ? '전압' : '',
     power.frequencyCheckRecommended ? '주파수' : '',
-  ].filter(Boolean).join('·')
+  ].filter(Boolean)
+  const warningSubject = differentStandards.length === 2
+    ? '전압과 주파수가'
+    : differentStandards[0] === '주파수' ? '주파수가' : '전압이'
+  const notes = [...new Set(power.supplies.map((supply) => supply.note.trim()).filter(Boolean))]
   return <section className="power-notice" role="status" aria-label="목적지 전압과 플러그 안내">
-    <p><strong>전압·플러그</strong>{supplyText && ` ${supplyText}`}{power.plugTypes.length > 0 && ` · ${power.plugTypes.join(', ')}형 콘센트`}</p>
-    {plugCompatibility === 'INCOMPATIBLE' && <p>한국 플러그와 맞는 유형이 없어 멀티 어댑터를 준비하세요.</p>}
-    {plugCompatibility === 'PARTIAL' && <div className="power-choice"><p>한국 플러그 일부만 맞을 수 있어요. 기기 플러그 모양을 확인하고, 맞지 않는 기기가 있으면 어댑터를 챙기세요.</p>{!adapterAdded && <button type="button" className="text-button" onClick={onAddAdapter}>체크리스트에 멀티 어댑터 추가</button>}</div>}
-    {differentStandards && <p>{differentStandards}가 한국과 달라요. 기기 라벨의 정격 범위를 확인하세요. 플러그 어댑터는 전압을 바꾸지 않습니다.</p>}
-    {[...new Set(power.supplies.map((supply) => supply.note).filter(Boolean))].map((note) =>
-      <p key={note}>{note}</p>
-    )}
-    {power.sources.length > 0 && <details><summary>기준 출처와 확인일</summary><ul>{power.sources.map((source) =>
-      <li key={`${source.kind}-${source.url}`}><a href={source.url} target="_blank" rel="noreferrer">{source.kind === 'SUPPLY' ? '전압·주파수 출처' : '플러그 출처'}</a> · {source.checkedOn}</li>
-    )}</ul></details>}
+    <p><strong>{plugCompatibility === 'COMPATIBLE'
+      ? '한국 플러그와 호환되는 콘센트 유형이 있어요.'
+      : plugCompatibility === 'PARTIAL'
+        ? '기기에 따라 멀티 어댑터가 필요할 수 있어요.'
+        : '호환되는 콘센트 유형이 확인되지 않아 멀티 어댑터 준비를 권장해요.'}</strong></p>
+    {plugCompatibility !== 'COMPATIBLE' && !adapterAdded &&
+      <p><button type="button" className="text-button" onClick={onAddAdapter}>체크리스트에 멀티 어댑터 추가</button></p>}
+    {differentStandards.length > 0 &&
+      <p className="power-warning">{warningSubject} 한국과 달라요. 기기 라벨을 확인하세요.</p>}
+    <details>
+      <summary>전압·플러그 자세히 보기</summary>
+      <dl className="power-details">
+        <dt>전압</dt><dd>{voltages.map((voltage) => `${voltage}V`).join(' / ') || '정보 없음'}</dd>
+        <dt>주파수</dt><dd>{frequencies.map((frequency) => `${frequency}Hz`).join(' / ') || '정보 없음'}</dd>
+        <dt>콘센트</dt><dd>{plugTypes.length > 0 ? `${plugTypes.join(', ')}형` : '정보 없음'}</dd>
+      </dl>
+      {differentStandards.length > 0 &&
+        <p>기기 라벨의 전압·주파수 범위에 목적지 규격이 포함되면 사용할 수 있어요. 예: 100–240V, 50/60Hz. 플러그 어댑터는 전압을 바꾸지 않아요.</p>}
+      {notes.map((note) => <p key={note}>{note}</p>)}
+      {power.sources.length > 0 && <ul>{power.sources.map((source) =>
+        <li key={`${source.kind}-${source.url}`}><a href={source.url} target="_blank" rel="noreferrer">{source.kind === 'SUPPLY' ? '전압·주파수 출처' : '플러그 출처'}</a> · 확인일 {source.checkedOn}</li>
+      )}</ul>}
+    </details>
   </section>
 }
 
