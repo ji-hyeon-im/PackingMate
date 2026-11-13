@@ -16,7 +16,7 @@ PackingMate/
 
 - Node.js: Vite 버전과 호환되는 버전
 - Java 21
-- PostgreSQL은 백엔드 DB 연동 단계에서 설정
+- PostgreSQL 16 (백엔드 규칙 데이터 저장)
 
 ## 실행
 
@@ -28,14 +28,14 @@ npm ci
 npm run dev
 ```
 
-백엔드:
+백엔드 (PostgreSQL 실행 후 `DB_PASSWORD` 환경 변수를 설정):
 
 ```bash
 cd backend
 ./gradlew bootRun
 ```
 
-현재 백엔드는 Spring Boot 기본 골격입니다. PostgreSQL, 외부 API, Docker 실행 설정은 해당 기능을 구현하면서 추가합니다. `.env.example`은 변수 이름 안내용이며, 실제 비밀값은 로컬 `.env`에 두고 커밋하지 않습니다.
+백엔드는 PostgreSQL에서 `schema.sql`과 `data.sql`을 시작 시 적용합니다. 기본 연결은 `localhost:5432`, 데이터베이스·사용자 `packingmate`이며 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` 환경 변수로 재설정할 수 있습니다. Gradle은 `.env`를 자동으로 읽지 않으므로 실행 셸에서 환경 변수를 설정해야 합니다. `.env.example`은 변수 이름 안내용이며, 실제 비밀값은 로컬 `.env`에 두고 커밋하지 않습니다. 외부 API와 Docker 실행 설정은 후속 작업입니다.
 
 ## 개발 원칙
 
