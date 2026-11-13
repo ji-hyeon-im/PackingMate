@@ -25,6 +25,7 @@ UI에는 국가 이름을 표시하고, API 경계에서는 ISO 3166-1 alpha-2 �
 | 국가 코드와 지원 국가 (`CountryCatalog`, `/api/v1/countries`, 입력 UI) | [ISO 3166 용어집](https://www.iso.org/glossary-for-iso-3166.html)은 alpha-2를 국가명을 나타내는 두 글자 코드로 설명합니다. 지원 국가 수요 기준은 [한국관광공사 목적지 통계](https://datalab.visitkorea.or.kr/site/portal/ex/bbs/View.do?cbIdx=1127&bcIdx=311491)입니다. | ISO 코드와 서비스 지원 목록을 분리합니다. 초기 지원은 일본(JP), 베트남(VN), 미국(US), 태국(TH), 대만(TW) 다섯 곳이며 서버도 이 목록만 허용합니다. 방문 수는 설계 문서에 기록된 2026년 1~9월 누계값을 사용했으며 이번 코드 변경에서 원자료를 다시 확인하지 않았습니다. |
 | 선크림·모자·선글라스 규칙 (`data.sql`) | [WHO 자외선 지침](https://www.who.int/news-room/fact-sheets/detail/ultraviolet-radiation)은 UVI 3 이상에서 자외선 보호를 권고합니다. [Open-Meteo 문서](https://open-meteo.com/en/docs)는 일별 `uv_index_max` 및 시간별 `uv_index` 변수를 제공합니다. | 기온 기준 대신 예보의 일 최고 UVI 또는 NASA POWER 월평균 UVI 3 이상에서 `weather:uv-protection` 태그를 생성합니다. 예보 UVI 기준은 WHO 권고를 참고하며 월평균 UVI 적용은 서비스의 fallback 휴리스틱입니다. |
 | 보조 배터리 준비 안내 (`data.sql`) | [인천국제공항의 보조 배터리 안내](https://www.airport.kr/ap_ko/1011/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGYXBfa28lMkYxNzUlMkYxMzkzNzYlMkZhcnRjbFZpZXcuZG8lM0ZwYWdlJTNEMSUyNmZpbmRUeXBlJTNEJTI2ZmluZFdvcmQlM0QlMjZyZ3NFbmRkZGVTdHIlM0QlMjZyZ3NFbmRkZWVTdHIlM0QlMjY%3D)는 시행일이 있는 기준을 공지합니다. | 변동 가능한 Wh·개수 제한을 시드에 고정하지 않고, 출발 전 공항·항공사의 최신 안내를 확인하라는 문구를 넣었습니다. |
+| 전압·플러그 기준 (`country_power_supply`, `country_power_plug`) | 국가별 공식 정부·관광기관 및 국제기구 자료(아래 전원 기준 표 참조) | 지원 5개국의 공급 전압·주파수·대표 플러그와 출처 URL·확인일을 DB 시드에 연결했습니다. 대표 플러그는 숙소별 콘센트를 보장하지 않습니다. |
 
 ## 2. 추후 연결할 공식 출처
 
@@ -34,7 +35,6 @@ UI에는 국가 이름을 표시하고, API 경계에서는 ISO 3166-1 alpha-2 �
 | 일반 준비물·국가별 여행 규정 DB | [외교부 해외안전여행](https://www.0404.go.kr/) 및 목적지별 정부·공관 안내 | 현재 `data.sql`의 준비물 52개는 수작업 초안이며 외교부 데이터를 복사한 것이 아닙니다. DB 작성 시 항목별로 확인한 출처 URL과 확인일을 저장합니다. 여권·입국·약품 반입 규정은 일반 준비물과 분리해 목적지별 공식 안내를 연결합니다. 홈페이지 주소만 전체 목록의 출처로 취급하지 않습니다. |
 | 월평균 기후 fallback 출처 검토 | [기상청 세계 기후평년값](https://data.kma.go.kr/climate/average30Years/selectAverage30YearsWorldList.do?pgmNo=560) | 지점 자료는 사용자가 입력할 수 있는 모든 도시를 보장하지 않아 fallback 제공자로 선택하지 않았습니다. 이번 구현은 NASA POWER의 좌표별 climatology API를 사용합니다. 결정 근거는 `docs/decisions/2026-11-13-weather-fallback-source.md`에 기록했습니다. |
 | 실시간 예보·UV | [Open-Meteo Forecast API](https://open-meteo.com/en/docs) | 현재 최대 16일 예보로 구현했습니다. 범위 밖 날짜 및 예보 실패 시 NASA POWER 월평균 자료로 대체하는 것은 서비스 흐름입니다. 무료 API의 비상업 이용 및 CC BY 4.0 조건을 확인했으며 상용 배포 전 최신 이용 조건을 다시 확인해야 합니다. |
-| 전압·플러그 | 대상 국가의 공식 전력·표준 기관 또는 검증 가능한 표준기관 자료 | 아직 출처와 국가별 값이 정해지지 않았습니다. 전압·주파수·플러그 타입 및 출처 URL·확인일을 함께 저장합니다. |
 | Gemini 추천 | [구조화 출력 문서](https://ai.google.dev/gemini-api/docs/structured-output), [API 호출 한도](https://ai.google.dev/gemini-api/docs/rate-limits) | JSON Schema 일부만 지원되므로 응답을 애플리케이션에서 다시 검증합니다. 모델·계정 등급별 한도는 변할 수 있어 실제 연결 시 최신 문서와 계정 값을 확인합니다. |
 | 항공 수하물 안전 안내 | [인천국제공항 안내](https://www.airport.kr/) 및 이용 항공사 공지 | 보조 배터리 등 시점·항공사별 규정은 고정 시드로 단정하지 않고, 사용자에게 최신 안내 확인을 제공하거나 갱신 가능한 데이터로 관리합니다. |
 
@@ -51,17 +51,34 @@ UI에는 국가 이름을 표시하고, API 경계에서는 ISO 3166-1 alpha-2 �
 | API 입력 검증 | 인원 1명 이상, 도시 최대 100자, 토큰 최대 60자 | 서비스 요청 검증값입니다. 공식 인원·도시·태그 길이 기준은 아닙니다. 근거 없던 인원 상한 20명은 두지 않습니다. |
 | 규칙 엔진 | 필요 태그 OR 매칭, 제외 태그 우선, 중복 병합, 공동용 기본 수량 1개 | 제품 요구사항입니다. 공동용 수량은 결과에서 사용자가 조정할 수 있습니다. |
 | 규칙 결과 분류 | `requiredTags`가 비어 있으면 기본 항목, 하나 이상이면 조건부 항목입니다. 조건부 항목은 필요 태그 중 하나 이상이 여행 태그와 일치할 때 포함하고, 제외 태그 중 하나라도 여행 태그와 일치하면 기본·조건부 구분 없이 제외합니다. | 서비스는 `recommendationType`으로 유형을 응답하며, 화면은 조건부 항목에만 추천 이유 펼치기를 표시합니다. 제외 태그는 조건부 분류 기준이 아닙니다. |
-| 지원 국가 기본 도시 | 일본 도쿄, 베트남 하노이, 미국 워싱턴 D.C., 태국 방콕, 대만 타이베이 | 미입력 도시 fallback을 위한 제품 가정으로 대표 도시를 각국 수도로 정했습니다. 도시명 국가 일치·오타 판정은 지오코딩 연결 후 제공해야 합니다. |
+| 전원 호환 비교 | 한국 기준 220V·60Hz 및 대표 플러그 C/F. 전압·주파수가 다르면 기기 정격 확인 안내, 플러그 유형이 C/F를 모두 포함하지 않으면 공동 어댑터 추가 | C/F 표현과 비교는 제품의 여행 안내용 단순화입니다. 실제 기기·숙소 규격을 확인하지 않습니다. 변압기를 자동 추천하지 않습니다. |
+| 지원 국가 기본 도시 | 일본 도쿄, 베트남 하노이, 미국 워싱턴 D.C., 태국 방콕, 대만 타이베이 | 미입력 도시 fallback을 위한 제품 가정으로 대표 도시를 각국 수도로 정했습니다. 도시명 국가 일치·오타 검증은 Open-Meteo 지오코딩으로 수행합니다. |
 | 결과 UI | 사용자가 조정한 항목 수량은 1 이상, 별도 상한 없음. 사용자 추가 항목은 1개로 시작 | UI 동작입니다. 근거 없던 99개 제한은 제거했습니다. |
 | 여행 정보 UI | SIMPLE/STANDARD 모드, 목적·활동·숙소·개인 상황 선택지 | 설계와 시드 태그에 맞춘 제품 선택지입니다. 모든 선택지가 현재 시드 항목을 바꾸는 것은 아닙니다. |
+
+
+## 전압·플러그 기준 (확인일: 2026-11-13)
+
+| 국가 | 공급 전압·주파수 | 대표 플러그 | 데이터 출처와 해석 |
+|---|---|---|---|
+| 일본 | 100V, 50/60Hz | A | [일본대사관 안내](https://www.sg.emb-japan.go.jp/itpr_en/japaninfo_electricity.html). 도쿄를 포함한 동일본은 50Hz, 서일본은 60Hz입니다. |
+| 베트남 | 220V, 50Hz | A, C | 전압·주파수는 [베트남 산업무역부 제품 시험 조건](https://moit.gov.vn/upload/2005517/20210705/skmbt_363191211171309524.pdf)의 220V±5%, 50Hz±1%를 참고했습니다. 플러그는 [ITU에 공개된 베트남 관련 전기 안내](https://www.itu.int/dms_pub/itu-r/md/00/sg05/cir/R00-SG05-CIR-0019%21%21PDF-E.pdf)의 납작한 핀·둥근 핀 설명을 A/C 유형으로 해석했습니다. 국가의 유일한 콘센트 유형을 뜻하지 않습니다. |
+| 미국 | 120V, 60Hz | A, B | [미국 에너지부](https://www.energy.gov/node/1508886)의 가정용 표준 120V, 60Hz와 2/3핀 형식을 유형 A/B로 분류했습니다. 일부 주거 회로는 240V를 사용합니다. |
+| 태국 | 220V, 50Hz | A, B, C, F, O | [태국 정부가 관리하는 공식 행사 안내](https://www.am2026thailand.go.th/electrical-info-and-devices)의 여행자용 전압·플러그 설명을 사용했습니다. 혼합형 콘센트와 기존 설비가 있어 숙소별 차이가 있습니다. |
+| 대만 | 110/220V, 60Hz | A, B | [대만 경제부 전압·주파수 규정](https://law.moea.gov.tw/LawContent.aspx?id=FL011044)의 110V·220V 공급과 60Hz, [타오위안 관광청 안내](https://travel.tycg.gov.tw/en/Service/Electricity)의 A/B 플러그·가정용 전압 설명을 사용했습니다. 110V는 일반 가정 조명·소형기기, 220V는 일부 설비에서 쓰입니다. |
+
+각 행은 `country_power_supply`, `country_power_plug`에 출처 URL과 확인일을 함께 저장하고, `data.sql`이 기준 데이터를 관리합니다. 애플리케이션 시작 시 이 두 테이블도 시드 기준으로 다시 채우므로 직접 수정한 데이터는 다음 시작 때 덮어써집니다.
+
+한국 출발 비교값은 [한국관광공사 안내](https://english.visitkorea.or.kr/svc/contents/contentsView.do?vcontsId=140041)의 220V·60Hz와 둥근 두 구 콘센트를 기준으로 합니다. 코드에서는 이를 대표 플러그 C/F로 비교하는 PackingMate 규칙으로 해석했습니다. 목적지 대표 플러그 집합이 한국 C/F 유형을 모두 포함하지 않으면 `power:plug-mismatch` 태그를 주고 DB의 `travel-adapter` 공동용 항목을 추가합니다. 현재 다섯 국가 중 일본·베트남·미국·대만에 해당합니다. 대표 플러그 분류는 숙소의 실제 콘센트 모양을 보장하지 않습니다.
+
+목적지의 값에 한국 표준과 다른 전압이 포함되거나 60Hz가 아닌 주파수가 포함되면 결과에 기기 라벨의 정격 전압·주파수를 확인하라는 안내를 표시합니다. 변압기는 자동 추천하지 않습니다. 일본은 지역별 주파수, 대만은 110V와 220V 회로가 함께 있어 예외 노트를 표시합니다. 국가 수준 데이터만 사용하므로 사용자가 입력한 도시나 숙소의 실제 공급 규격으로 추정하지 않습니다.
 
 ## 아직 연결하지 않은 기능
 
 - 날씨 기능은 연결했습니다. 지오코딩에서 국가 코드를 제한하며 결과가 없는 도시는 재입력을 요청합니다.
-- 전압·플러그 기준 데이터와 Gemini API는 아직 연결하지 않았습니다.
-- `travel-adapter`에는 국가별 전압·플러그 자료가 없어 매칭 조건이 생성되지 않습니다.
+- Gemini API는 아직 연결하지 않았습니다.
 - `activity:long-transfer`, `activity:no-water-activities`는 현재 UI/API에서 생성되지 않습니다. `purpose:business`, `activity:ski`도 준비물 시드에서 사용하는 규칙이 없습니다. 관련 태그 행을 유지·삭제·보완할지 정리가 필요합니다.
-- 날씨 연동 후 확인된 출처와 서비스 휴리스틱은 아래 날씨 연동 절에 기록합니다.
+- 날씨·전원 기준의 구현과 출처는 아래 각 절에 기록합니다.
 
 ## 날씨 연동 (확인일: 2026-11-13)
 

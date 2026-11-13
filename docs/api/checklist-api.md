@@ -28,7 +28,7 @@ JSON 요청을 검증하고 날씨 자료와 현재 DB의 준비물 규칙으로
 | `mode` | `SIMPLE` 또는 `STANDARD` |
 | `purposes`, `activities`, `providedLodgingAmenities`, `personalSituations` | 필수 배열(없으면 빈 배열), 영문·숫자·하이픈 토큰 |
 
-성공 시 `200 OK`와 여행 정보, 날씨 요약, 항목 목록을 반환합니다. 날씨 자료를 확인하지 못해도 체크리스트 생성을 중단하지 않으며 `weather.source`를 `UNAVAILABLE`로 반환하고 날씨 조건을 규칙에 반영하지 않습니다. 항목에는 `itemId`, 이름·별칭, 카테고리·범위, 계산 수량, 일치한 근거 태그, `recommendationType`(`BASIC` 또는 `CONDITIONAL`), 규칙의 기본 추천 문구가 포함됩니다. `requiredTags`가 비어 있으면 기본 항목으로 항상 후보에 포함되고, 하나 이상이면 입력 태그 중 하나와 일치해야 추가되는 조건부 항목입니다. `excludeTags`가 일치하면 기본/조건부와 관계없이 결과에서 제외됩니다. 프론트엔드는 `recommendationType`이 `CONDITIONAL`인 항목에만 접힌 추천 이유 펼치기를 표시합니다. 공동용 수량은 기존 규칙 엔진에 따라 1이며 인원수는 응답 메타데이터로만 전달됩니다.
+성공 시 `200 OK`와 여행 정보, 날씨 요약, 전압·플러그 요약, 항목 목록을 반환합니다. 날씨 자료를 확인하지 못해도 체크리스트 생성을 중단하지 않으며 `weather.source`를 `UNAVAILABLE`로 반환하고 날씨 조건을 규칙에 반영하지 않습니다. 항목에는 `itemId`, 이름·별칭, 카테고리·범위, 계산 수량, 일치한 근거 태그, `recommendationType`(`BASIC` 또는 `CONDITIONAL`), 규칙의 기본 추천 문구가 포함됩니다. `requiredTags`가 비어 있으면 기본 항목으로 항상 후보에 포함되고, 하나 이상이면 입력 태그 중 하나와 일치해야 추가되는 조건부 항목입니다. `excludeTags`가 일치하면 기본/조건부와 관계없이 결과에서 제외됩니다. 프론트엔드는 `recommendationType`이 `CONDITIONAL`인 항목에만 접힌 추천 이유 펼치기를 표시합니다. 공동용 수량은 기존 규칙 엔진에 따라 1이며 인원수는 응답 메타데이터로만 전달됩니다.
 
 날씨 응답 필드는 다음과 같습니다.
 
@@ -47,6 +47,29 @@ JSON 요청을 검증하고 날씨 자료와 현재 DB의 준비물 규칙으로
 ```
 
 `source`는 `OPEN_METEO`, `NASA_POWER`, `MIXED`, `PARTIAL_OPEN_METEO`, `UNAVAILABLE` 중 하나입니다. 예보일과 월평균 대체일이 섞이면 `MIXED`이며, 월평균 조회에 실패했지만 일부 예보만 있으면 `PARTIAL_OPEN_METEO`입니다. `climatologyPeriod`는 NASA POWER 응답에서 받은 기간이며 월평균을 사용하지 않으면 `null`입니다. 온도는 여행 일수로 가중한 평균입니다. `rainy`는 하루 강수량 1.0mm 이상 예보 또는 NASA POWER 월평균 일 강수량 1.0mm 이상을 뜻하는 제품 휴리스틱입니다. `uvProtectionRecommended`는 예보의 일 최고 UVI 또는 월평균 UVI가 3 이상일 때 `true`입니다.
+
+전원 응답 필드는 다음과 같습니다.
+
+```json
+{
+  "power": {
+    "supplies": [
+      { "voltage": 100, "frequency": 50, "note": "동일본(도쿄 포함)은 50Hz. 서일본 일부는 60Hz." },
+      { "voltage": 100, "frequency": 60, "note": "서일본(나고야·교토·오사카 등)은 60Hz." }
+    ],
+    "plugTypes": ["A"],
+    "plugMismatch": true,
+    "voltageCheckRecommended": true,
+    "frequencyCheckRecommended": true,
+    "sources": [
+      { "kind": "SUPPLY", "url": "https://www.sg.emb-japan.go.jp/itpr_en/japaninfo_electricity.html", "checkedOn": "2026-11-13" },
+      { "kind": "PLUG", "url": "https://www.sg.emb-japan.go.jp/itpr_en/japaninfo_electricity.html", "checkedOn": "2026-11-13" }
+    ]
+  }
+}
+```
+
+`supplies`와 `plugTypes`는 지원 국가별 DB 기준 자료입니다. `plugMismatch`가 참이면 기존 `travel-adapter` 공동용 항목을 규칙 엔진에 추가합니다. `voltageCheckRecommended`는 목적지에 220V가 아닌 공급값이 포함될 때, `frequencyCheckRecommended`는 60Hz가 아닌 값이 포함될 때 참입니다. 해당 안내는 기기 라벨의 정격을 확인하라는 의미이며 변압기를 자동 추천하지 않습니다. `sources`에는 적용된 전원·플러그 근거 URL과 확인일을 담습니다. 여행지 건물의 실제 콘센트와 전원은 다를 수 있습니다.
 
 날씨 조회 시 입력 도시와 국가 코드는 Open-Meteo 지오코딩으로 전송되며, 지오코딩 좌표는 예보 및 NASA POWER 조회에 사용됩니다. 출발일·귀국일은 서버에서 예보 범위와 대조하며 외부 서비스로 전송하지 않습니다. 서버는 여행 입력을 저장하지 않습니다. 지오코딩 서비스가 일시적으로 실패하면 체크리스트는 반환하고 날씨 상태는 `UNAVAILABLE`로 처리합니다.
 
