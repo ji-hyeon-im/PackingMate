@@ -16,3 +16,5 @@
 ## 근거
 
 외부 표준이 아니라 현재 MVP의 고정 기준 데이터와 `spring.sql.init.mode: always` 설정을 바탕으로 한 자체 설계 결정이다. DB 직접 수정이 보존되지 않는 동작은 README와 이 결정 기록에 명시한다.
+
+현재 시드 적용 범위는 이 기록을, 실제 준비물·전원 값과 출처는 [`sources-and-rules.md`](../sources-and-rules.md)를 기준으로 확인한다. 실행 방법은 [README](../../README.md)에 둔다.

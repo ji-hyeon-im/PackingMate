@@ -38,3 +38,5 @@
 - [대만 경제부: 공급 전압·주파수 기준](https://law.moea.gov.tw/LawContent.aspx?id=FL011044)
 - [타오위안 관광청: 전기 안내](https://travel.tycg.gov.tw/en/Service/Electricity)
 - [한국관광공사: 전압·통신 안내](https://english.visitkorea.or.kr/svc/contents/contentsView.do?vcontsId=140041)
+
+현재 국가별 값과 부분 호환 안내는 [`sources-and-rules.md`](../sources-and-rules.md), 응답 계약은 [`checklist-api.md`](../api/checklist-api.md)를 기준으로 확인한다. 이 결정 기록은 선택 이유와 해석의 한계를 보존한다.

@@ -29,3 +29,5 @@ NASA POWER Climatology API는 위도·경도 좌표로 월평균 데이터를 �
 - [NASA POWER 처리 방법](https://power.larc.nasa.gov/docs/methodology/data/processing/)
 - [WHO 자외선 지침](https://www.who.int/news-room/fact-sheets/detail/ultraviolet-radiation)
 - [Open-Meteo 이용 조건](https://open-meteo.com/en/terms)
+
+현재 동작과 적용 상태는 [`sources-and-rules.md`](../sources-and-rules.md), 응답 필드와 상태값은 [`checklist-api.md`](../api/checklist-api.md)를 기준으로 확인한다.

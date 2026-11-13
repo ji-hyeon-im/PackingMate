@@ -28,7 +28,7 @@ JSON 요청을 검증하고 날씨 자료와 현재 DB의 준비물 규칙으로
 | `mode` | `SIMPLE` 또는 `STANDARD` |
 | `purposes`, `activities`, `providedLodgingAmenities`, `personalSituations` | 필수 배열(없으면 빈 배열), 영문·숫자·하이픈 토큰 |
 
-성공 시 `200 OK`와 여행 정보, 날씨 요약, 전압·플러그 요약, 항목 목록을 반환합니다. 날씨 자료를 확인하지 못해도 체크리스트 생성을 중단하지 않으며 `weather.source`를 `UNAVAILABLE`로 반환하고 날씨 조건을 규칙에 반영하지 않습니다. 항목에는 `itemId`, 이름·별칭, 카테고리·범위, 계산 수량, 일치한 근거 태그, `recommendationType`(`BASIC` 또는 `CONDITIONAL`), 규칙의 기본 추천 문구가 포함됩니다. `requiredTags`가 비어 있으면 기본 항목으로 항상 후보에 포함되고, 하나 이상이면 입력 태그 중 하나와 일치해야 추가되는 조건부 항목입니다. `excludeTags`가 일치하면 기본/조건부와 관계없이 결과에서 제외됩니다. 프론트엔드는 `recommendationType`이 `CONDITIONAL`인 항목에만 접힌 추천 이유 펼치기를 표시합니다. 공동용 수량은 기존 규칙 엔진에 따라 1이며 인원수는 응답 메타데이터로만 전달됩니다.
+성공 시 `200 OK`와 여행 정보, 날씨 요약, 전압·플러그 요약, 항목 목록을 반환합니다. 날씨 자료를 확인하지 못해도 체크리스트 생성을 중단하지 않으며 `weather.source`를 `UNAVAILABLE`로 반환하고 날씨 조건을 규칙에 반영하지 않습니다. 항목에는 `itemId`, 이름·별칭, 카테고리·범위, 계산 수량, 일치 태그, `recommendationType`(`BASIC` 또는 `CONDITIONAL`), 추천 문구가 포함됩니다. 기본·조건부 분류 및 추천 이유 동작은 이 API 응답 계약이며, 태그 매칭과 수량 산정 기준은 [출처·규칙 문서](../sources-and-rules.md)를 기준으로 합니다. 공동용 수량은 1이며 인원수는 응답 메타데이터로만 전달됩니다.
 
 날씨 응답 필드는 다음과 같습니다.
 
