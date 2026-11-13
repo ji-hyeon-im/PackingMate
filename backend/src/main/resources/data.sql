@@ -1,5 +1,13 @@
 -- MVP 기본 준비물 52개. 조건 태그(required_tag)는 OR 조건으로 매칭하고,
 -- 비어 있는 required_tag 목록은 항상 포함되는 항목으로 취급한다.
+-- 체크리스트 기준 데이터는 SQL 시드가 원본이며, 매 실행 때 아래 전체 데이터 집합으로 동기화한다.
+
+BEGIN;
+
+DELETE FROM checklist_item_alias;
+DELETE FROM checklist_item_required_tag;
+DELETE FROM checklist_item_exclude_tag;
+DELETE FROM checklist_item;
 
 INSERT INTO checklist_item (
     item_id, name, category, scope, quantity_rule_type,
@@ -92,10 +100,6 @@ INSERT INTO checklist_item_alias (item_id, alias) VALUES
     ('travel-adapter', '멀티 어댑터')
 ON CONFLICT DO NOTHING;
 
--- 과거 시드에서 더위 조건이던 자외선 보호 항목을 새 근거 태그로 옮긴다.
-DELETE FROM checklist_item_required_tag
-WHERE item_id IN ('hat', 'sunscreen', 'sunglasses') AND tag = 'temp:hot';
-
 INSERT INTO checklist_item_required_tag (item_id, tag) VALUES
     ('warm-jacket', 'temp:cold'),
     ('rain-jacket', 'weather:rain'),
@@ -119,3 +123,5 @@ INSERT INTO checklist_item_exclude_tag (item_id, tag) VALUES
     ('conditioner', 'lodging:conditioner-provided'),
     ('body-wash', 'lodging:body-wash-provided')
 ON CONFLICT DO NOTHING;
+
+COMMIT;

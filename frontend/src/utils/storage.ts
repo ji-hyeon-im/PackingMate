@@ -24,13 +24,47 @@ export function saveChecklist(value: SavedChecklist | null): void {
 }
 
 function isSavedChecklist(value: unknown): value is SavedChecklist {
-  if (!value || typeof value !== 'object') return false
-  const candidate = value as Partial<SavedChecklist>
-  return Boolean(
-    candidate.request &&
-      candidate.response &&
-      Array.isArray(candidate.response.items) &&
-      Array.isArray(candidate.customItems) &&
-      Array.isArray(candidate.checkedItemIds),
-  )
+  if (!isRecord(value) || !isChecklistRequest(value.request) || !isChecklistResponse(value.response)) return false
+  return Array.isArray(value.customItems) && value.customItems.every(isChecklistItem) &&
+    Array.isArray(value.checkedItemIds) && value.checkedItemIds.every(isString)
+}
+
+function isChecklistRequest(value: unknown): boolean {
+  return isRecord(value) && isString(value.countryCode) && isString(value.city) &&
+    isString(value.departureDate) && isString(value.returnDate) &&
+    Number.isInteger(value.travelers) && Number(value.travelers) >= 1 &&
+    (value.mode === 'SIMPLE' || value.mode === 'STANDARD') &&
+    isStringArray(value.purposes) && isStringArray(value.activities) &&
+    isStringArray(value.providedLodgingAmenities) && isStringArray(value.personalSituations)
+}
+
+function isChecklistResponse(value: unknown): boolean {
+  return isRecord(value) && isString(value.countryCode) &&
+    (value.city === null || isString(value.city)) &&
+    Number.isInteger(value.tripDays) && Number(value.tripDays) >= 1 &&
+    Number.isInteger(value.travelers) && Number(value.travelers) >= 1 &&
+    Array.isArray(value.items) && value.items.every(isChecklistItem)
+}
+
+function isChecklistItem(value: unknown): boolean {
+  return isRecord(value) && isString(value.itemId) && isString(value.name) &&
+    isStringArray(value.aliases) &&
+    ['DOCUMENTS_FINANCE', 'CLOTHING', 'TOILETRIES_HYGIENE', 'ELECTRONICS', 'MEDICINE_HEALTH', 'SAFETY_OTHER'].includes(String(value.category)) &&
+    (value.scope === 'PERSONAL' || value.scope === 'SHARED') &&
+    Number.isInteger(value.quantity) && Number(value.quantity) >= 1 &&
+    isStringArray(value.matchedTags) && isString(value.reasonTemplate) &&
+    (value.recommendationType === undefined || value.recommendationType === 'BASIC' || value.recommendationType === 'CONDITIONAL') &&
+    (value.userAdded === undefined || typeof value.userAdded === 'boolean')
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === 'string'
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(isString)
 }

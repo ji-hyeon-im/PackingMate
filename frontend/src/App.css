@@ -85,6 +85,9 @@
 .item-name-line strong { color: #353830; font-size: 11px; font-weight: 600; }
 .item-meta { display: flex; align-items: center; gap: 7px; margin-top: 4px; color: #989a90; font-size: 9px; }
 .item-copy > p { margin: 5px 0 0; color: #777b70; font-size: 9px; line-height: 1.5; }
+.item-reason { margin-top: 5px; color: #777b70; font-size: 9px; line-height: 1.5; }
+.item-reason summary { width: fit-content; color: #68724f; cursor: pointer; font-weight: 600; }
+.item-reason p { display: -webkit-box; margin: 4px 0 0; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .item-badge { padding: 2px 5px; color: #5e7957; background: #edf2ea; border-radius: 3px; font-size: 8px; }
 .custom-badge { color: #a3603d; background: #fbf0e9; }
 .quantity { display: flex; align-items: baseline; gap: 3px; color: #444940; font-size: 12px; font-weight: 600; white-space: nowrap; }

@@ -25,11 +25,17 @@ public record ChecklistResponse(
             ItemScope scope,
             int quantity,
             Set<String> matchedTags,
-            String reasonTemplate
+            String reasonTemplate,
+            RecommendationType recommendationType
     ) {
         public Item {
             aliases = Set.copyOf(aliases);
             matchedTags = Set.copyOf(matchedTags);
         }
+    }
+
+    public enum RecommendationType {
+        BASIC,
+        CONDITIONAL
     }
 }
