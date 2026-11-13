@@ -34,14 +34,15 @@ public class ChecklistService {
             throw new InvalidChecklistRequestException("여행 기간이 허용 범위를 초과합니다.");
         }
         int tripDays = (int) days;
+        boolean standardMode = request.mode() == ChecklistRequest.ChecklistMode.STANDARD;
         RuleInput ruleInput = new RuleInput(
                 tripDays,
                 request.purposes(),
                 request.activities(),
                 null,
                 false,
-                request.providedLodgingAmenities(),
-                request.personalSituations(),
+                standardMode ? request.providedLodgingAmenities() : Set.of(),
+                standardMode ? request.personalSituations() : Set.of(),
                 Set.of());
         List<ChecklistItem> items = checklistItemRepository.findAll();
         List<ChecklistResponse.Item> responseItems = ruleEngine.generate(items, ruleInput).stream()
