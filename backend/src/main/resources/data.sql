@@ -100,7 +100,6 @@ INSERT INTO checklist_item_required_tag (item_id, tag) VALUES
     ('hat', 'temp:hot'),
     ('scarf', 'temp:cold'),
     ('sunscreen', 'temp:hot'),
-    ('conditioner', 'lodging:conditioner-absent'),
     ('camera', 'personal:camera'),
     ('camera-battery', 'personal:camera'),
     ('glasses', 'personal:glasses'),

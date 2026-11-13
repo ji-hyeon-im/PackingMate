@@ -1,3 +1,11 @@
 spring:
   application:
-    name: backend
+    name: packingmate
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/packingmate}
+    username: ${DB_USERNAME:packingmate}
+    password: ${DB_PASSWORD:}
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
