@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+**/node_modules
+**/dist
+**/.gradle
+**/build
+**/.DS_Store
+**/.idea
+**/.vscode
+*.log
+logs

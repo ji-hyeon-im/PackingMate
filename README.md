@@ -39,6 +39,42 @@ npm run dev
 
 Vite 개발 서버는 `/api` 요청을 `http://localhost:8080`의 백엔드로 전달합니다. 체크리스트 생성을 사용하려면 PostgreSQL을 준비하고 백엔드를 먼저 실행해야 합니다.
 
+## Docker 실행
+
+Docker Desktop과 Compose v2가 필요합니다. 아래 명령은 저장소 루트에서 실행합니다.
+
+1. 이전에 같은 이름의 환경 변수를 `export`했다면 지워 `.env` 값을 사용하게 합니다. 셸 변수는 `.env`보다 우선합니다 ([Docker 문서](https://docs.docker.com/compose/how-tos/environment-variables/envvars-precedence/)).
+
+   ```bash
+   unset DB_NAME DB_USERNAME DB_PASSWORD APP_PORT
+   ```
+
+2. 처음 실행할 때만 예시 파일을 복사합니다. `.env`가 이미 있으면 복사하지 말고 기존 파일을 편집하세요. `DB_PASSWORD`를 로컬용 비밀번호로 바꾸고 저장합니다.
+
+   ```bash
+   test -f .env || cp .env.example .env
+   open -e .env
+   ```
+
+3. 설정을 비밀값 출력 없이 검증합니다. 성공하면 출력 없이 끝납니다.
+
+   ```bash
+   docker compose config --quiet
+   ```
+
+4. 앱 이미지를 빌드하고 앱·PostgreSQL을 시작합니다.
+
+   ```bash
+   docker compose up --build -d
+   docker compose ps
+   ```
+
+   DB가 `healthy`이고 앱이 실행 중이면 [http://localhost:8080](http://localhost:8080)을 엽니다. 앱 로그는 `docker compose logs -f app`으로 확인할 수 있습니다. 로그 보기만 끝내려면 `Ctrl+C`를 누르세요. 컨테이너는 계속 실행됩니다.
+
+앱은 로컬 호스트에만 공개되고 DB 포트는 호스트에 공개되지 않습니다. 로컬 Spring Boot가 이미 8080을 사용 중이면 종료하거나 `.env`에서 `APP_PORT=8081`로 바꾸세요.
+
+종료할 때는 `docker compose down`을 실행합니다. PostgreSQL 볼륨은 보존됩니다. `docker compose down -v`는 DB 데이터를 삭제하므로 의도적으로 초기화할 때만 사용하세요. 앱 시작 때 기준 시드 테이블은 `data.sql` 내용으로 다시 채워집니다.
+
 ## 현재 기능
 
 - 일본·베트남·미국·태국·대만의 목적지와 도시, 여행 기간으로 규칙 기반 체크리스트를 생성합니다.
@@ -59,7 +95,7 @@ Vite 개발 서버는 `/api` 요청을 `http://localhost:8080`의 백엔드로 �
 - 기능 브랜치에서 기능과 관련 테스트를 함께 작성합니다.
 - 테스트는 담당 개발자가 직접 실행하고 결과를 기록합니다.
 
-Gemini 연동과 Docker 실행 설정은 후속 작업입니다.
+Gemini 연동은 MVP 이후 확장 기능입니다.
 
 ## 외부 자료와 배포 전 확인
 
