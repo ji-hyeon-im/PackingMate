@@ -1,0 +1,21 @@
+@startuml
+left to right direction
+actor "사용자" as User
+node "Docker 호스트" {
+  node "앱 컨테이너" as App {
+    artifact "Spring Boot + React" as WebApp
+  }
+  node "PostgreSQL 컨테이너" as DbContainer {
+    database "packingmate" as DB
+  }
+  node "Docker named volume\npostgres-data" as Volume
+}
+cloud "외부 API:\nOpen-Meteo" as OpenMeteo
+cloud "외부 API:\nNASA POWER" as NasaPower
+
+User --> App : HTTP
+App --> DbContainer : SQL
+DbContainer -- Volume : 데이터 디렉터리 마운트
+App --> OpenMeteo : HTTPS
+App --> NasaPower : HTTPS (예보 공백 시)
+@enduml

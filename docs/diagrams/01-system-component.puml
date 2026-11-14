@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+skinparam componentStyle uml2
+
+actor "사용자" as User
+
+package "브라우저" {
+  component "PackingMate UI" as UI
+  component "브라우저 저장소\nlocalStorage" as Storage
+  UI --> Storage : 입력·체크 상태 저장
+}
+
+package "PackingMate 서버" {
+  component "Spring Boot API" as API
+  component "체크리스트 생성\n(검증·추천·수량 계산)" as Core
+  API --> Core
+}
+
+database "PostgreSQL\n준비물·전원 기준" as DB
+cloud "외부 API:\nOpen-Meteo" as OpenMeteo
+cloud "외부 API:\nNASA POWER" as NasaPower
+
+User --> UI
+UI --> API : REST
+Core --> DB : 기준 자료 조회
+Core --> OpenMeteo : 지오코딩·날씨 조회
+Core --> NasaPower : 예보 공백 시 보완 조회
+@enduml

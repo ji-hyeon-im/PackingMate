@@ -1,0 +1,19 @@
+@startuml
+left to right direction
+actor "사용자" as User
+package "AWS" {
+  component "ALB\nHTTPS 진입점" as ALB
+  node "ECS Fargate\nPackingMate 앱" as App
+  database "Amazon RDS\nPostgreSQL" as DB
+  component "NAT Gateway" as NAT
+}
+cloud "외부 API:\nOpen-Meteo" as OpenMeteo
+cloud "외부 API:\nNASA POWER" as NasaPower
+
+User --> ALB : HTTPS
+ALB --> App
+App --> DB : SQL
+App --> NAT : 외부 요청
+NAT --> OpenMeteo : HTTPS
+NAT --> NasaPower : HTTPS (예보 공백 시)
+@enduml

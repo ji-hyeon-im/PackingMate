@@ -1,0 +1,35 @@
+@startuml
+actor "사용자" as User
+participant "브라우저 UI" as UI
+participant "Spring Boot API" as API
+database "PostgreSQL" as DB
+participant "외부 API: Open-Meteo" as OpenMeteo
+participant "외부 API: NASA POWER" as NasaPower
+participant "추천 로직" as Rules
+
+User -> UI : 여행 조건 입력
+UI -> API : 체크리스트 요청
+API -> OpenMeteo : 도시·국가 코드 지오코딩
+OpenMeteo --> API : 검색 결과 좌표
+API -> OpenMeteo : 여행 기간 예보 조회
+OpenMeteo --> API : 예보 자료
+alt 예보가 여행 기간 전체를 포함
+  API -> API : 예보 요약
+else 예보 공백이 있음
+  API -> NasaPower : 좌표 기준 월평균 기후 조회
+  alt 월평균 자료 있음
+    NasaPower --> API : 월평균 자료
+    API -> API : 예보와 월평균 자료 결합
+  else 월평균 자료 없음
+    NasaPower --> API : 조회 실패 또는 자료 없음
+    API -> API : 남은 예보는 부분 자료로 사용; 없으면 UNAVAILABLE
+  end
+end
+API -> DB : 준비물·전원 기준 조회
+DB --> API : 기준 자료
+API -> Rules : 조건 + 자료
+Rules --> API : 준비물·수량
+API --> UI : 체크리스트 응답
+UI -> UI : 화면 표시·localStorage 저장
+UI --> User : 결과 확인
+@enduml
