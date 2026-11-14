@@ -67,3 +67,5 @@ cd /Users/robin/클라우드프로그래밍/PackingMate/backend
 ```
 
 위 결과는 사용자가 보고한 지정 단위 테스트와 SQL 검증 실행 결과를 기록한 것이다. 전체 `./gradlew test` 또는 Spring 컨텍스트를 포함한 통합 테스트 결과는 별도로 확인하지 않았다.
+
+후속 전체 백엔드 테스트 실행 결과는 [`2026-11-14 전체 검증 기록`](2026-11-14-full-verification.md)에 기록했다.

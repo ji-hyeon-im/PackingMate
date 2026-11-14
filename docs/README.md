@@ -11,6 +11,7 @@
 - [`testing/checklist-rules.md`](testing/checklist-rules.md): 초기 규칙 도메인·시드·엔진 검증 기록
 - [`testing/checklist-ui.md`](testing/checklist-ui.md): 초기 UI 빌드·린트 기록
 - [`testing/mvp-consistency.md`](testing/mvp-consistency.md): 모드·저장·브라우저 흐름의 후속 검증 기록
+- [`testing/2026-11-14-full-verification.md`](testing/2026-11-14-full-verification.md): 전체 백엔드 테스트, 프론트엔드 검사, 브라우저 시나리오 및 Compose 상태 확인
 
 결정 문서는 선택 이유와 당시 한계를 보존합니다. 중복되는 세부 동작은 API 계약이나 출처·규칙 문서의 기준을 따릅니다.
 
