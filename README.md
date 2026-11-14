@@ -73,7 +73,9 @@ Docker Desktop과 Compose v2가 필요합니다. 아래 명령은 저장소 루�
 
 앱은 로컬 호스트에만 공개되고 DB 포트는 호스트에 공개되지 않습니다. 로컬 Spring Boot가 이미 8080을 사용 중이면 종료하거나 `.env`에서 `APP_PORT=8081`로 바꾸세요.
 
-종료할 때는 `docker compose down`을 실행합니다. PostgreSQL 볼륨은 보존됩니다. `docker compose down -v`는 DB 데이터를 삭제하므로 의도적으로 초기화할 때만 사용하세요. 앱 시작 때 기준 시드 테이블은 `data.sql` 내용으로 다시 채워집니다.
+**Docker 종료:** 종료할 때는 `docker compose down`을 실행합니다. PostgreSQL 볼륨은 보존됩니다. `docker compose down -v`는 DB 데이터를 삭제하므로 의도적으로 초기화할 때만 사용하세요. 앱 시작 때 기준 시드 테이블은 `data.sql` 내용으로 다시 채워집니다.
+
+**로컬 PostgreSQL 종료:** `docker compose down`은 Compose로 실행한 PostgreSQL만 종료합니다. Homebrew로 설치한 로컬 PostgreSQL 16은 별도로 실행 중일 수 있습니다. 로컬 서버도 종료하려면 `brew services stop postgresql@16`을 실행하세요. `lsof -i :5432`로 로컬 PostgreSQL이 5432 포트를 사용 중인지 확인할 수 있습니다. Docker 실행 시 DB 포트는 호스트에 공개되지 않습니다.
 
 ## 현재 기능
 
