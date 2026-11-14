@@ -18,8 +18,8 @@ public record ChecklistRequest(
         @NotNull LocalDate returnDate,
         @NotNull @Min(1) Integer travelers,
         @NotNull ChecklistMode mode,
-        @NotNull Set<@NotBlank @Size(max = 60) @Pattern(regexp = "[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*") String> purposes,
-        @NotNull Set<@NotBlank @Size(max = 60) @Pattern(regexp = "[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*") String> activities,
+        @NotNull Set<@NotBlank @Size(max = 60) @Pattern(regexp = "(?:leisure|business)", message = "지원하는 여행 목적을 선택해야 합니다.") String> purposes,
+        @NotNull Set<@NotBlank @Size(max = 60) @Pattern(regexp = "(?:trekking|swimming|ski)", message = "지원하는 활동을 선택해야 합니다.") String> activities,
         @NotNull Set<@NotBlank @Size(max = 60) @Pattern(regexp = "[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*") String> providedLodgingAmenities,
         @NotNull Set<@NotBlank @Size(max = 60) @Pattern(regexp = "[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*") String> personalSituations
 ) {

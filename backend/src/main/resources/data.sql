@@ -1,4 +1,4 @@
--- MVP 기본 준비물 52개. 조건 태그(required_tag)는 OR 조건으로 매칭하고,
+-- MVP 기본 준비물 56개. 조건 태그(required_tag)는 OR 조건으로 매칭하고,
 -- 비어 있는 required_tag 목록은 항상 포함되는 항목으로 취급한다.
 -- 체크리스트 기준 데이터는 SQL 시드가 원본이며, 매 실행 때 아래 전체 데이터 집합으로 동기화한다.
 
@@ -36,6 +36,10 @@ INSERT INTO checklist_item (
     ('trekking-shoes', '등산화', 'CLOTHING', 'PERSONAL', 'FIXED', 1, 1, '트레킹 활동에 적합한 신발을 준비합니다.'),
     ('hat', '모자', 'CLOTHING', 'PERSONAL', 'FIXED', 1, 1, '햇볕이 강한 야외 활동에서 머리를 보호합니다.'),
     ('scarf', '목도리', 'CLOTHING', 'PERSONAL', 'FIXED', 1, 1, '추운 날 목 주변을 보온할 수 있습니다.'),
+    ('business-attire', '업무용 복장', 'CLOTHING', 'PERSONAL', 'FIXED', 1, 2, '출장 중 업무 일정에 입을 복장을 준비할 수 있습니다.'),
+    ('thermal-base-layer', '보온 내의', 'CLOTHING', 'PERSONAL', 'FIXED', 1, 2, '스키 활동 중 체온을 유지하는 데 도움이 됩니다.'),
+    ('ski-gloves', '방수 방한 장갑', 'CLOTHING', 'PERSONAL', 'FIXED', 1, 1, '스키 활동 중 손을 따뜻하고 건조하게 유지하는 데 도움이 됩니다.'),
+    ('ski-goggles', '스키 고글', 'CLOTHING', 'PERSONAL', 'FIXED', 1, 1, '스키 활동 중 눈과 바람으로부터 눈 주변을 보호할 수 있습니다.'),
 
     ('toothbrush', '칫솔', 'TOILETRIES_HYGIENE', 'PERSONAL', 'FIXED', 1, 1, '여행 중 구강 위생 관리에 사용합니다.'),
     ('toothpaste', '치약', 'TOILETRIES_HYGIENE', 'PERSONAL', 'FIXED', 1, 1, '여행 중 구강 위생 관리에 사용합니다.'),
@@ -56,11 +60,11 @@ INSERT INTO checklist_item (
     ('camera', '카메라', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 1, '사진 촬영이 필요한 경우 사용할 수 있습니다.'),
     ('camera-battery', '카메라 배터리', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 2, '카메라 사용 시간이 길어질 때 예비 전원을 제공합니다.'),
     ('multi-outlet', '멀티탭', 'ELECTRONICS', 'SHARED', 'FIXED', 1, 1, '숙소에서 여러 기기를 충전할 때 사용할 수 있습니다.'),
+    ('laptop', '노트북', 'ELECTRONICS', 'PERSONAL', 'FIXED', 1, 1, '출장 중 업무 자료를 확인하거나 작업할 때 사용할 수 있습니다.'),
 
     ('prescription-medicine', '처방약', 'MEDICINE_HEALTH', 'PERSONAL', 'FIXED', 1, 1, '평소 복용하는 처방약을 여행 기간에 맞춰 준비합니다.'),
     ('personal-medicine', '상비약', 'MEDICINE_HEALTH', 'PERSONAL', 'FIXED', 1, 1, '개인 건강 상태에 맞는 상비약을 준비할 수 있습니다.'),
     ('pain-reliever', '진통제', 'MEDICINE_HEALTH', 'PERSONAL', 'FIXED', 1, 1, '두통이나 통증이 있을 때 사용할 수 있습니다.'),
-    ('motion-sickness-medicine', '멀미약', 'MEDICINE_HEALTH', 'PERSONAL', 'FIXED', 1, 1, '이동 중 멀미에 대비할 수 있습니다.'),
     ('bandages', '밴드', 'MEDICINE_HEALTH', 'SHARED', 'FIXED', 1, 1, '작은 상처를 보호할 때 사용할 수 있습니다.'),
     ('disinfectant-wipes', '소독용 물티슈', 'MEDICINE_HEALTH', 'SHARED', 'FIXED', 1, 1, '간단한 위생 관리에 사용할 수 있습니다.'),
     ('glasses', '안경', 'MEDICINE_HEALTH', 'PERSONAL', 'FIXED', 1, 1, '시력 교정이 필요한 경우 준비합니다.'),
@@ -113,14 +117,17 @@ INSERT INTO checklist_item_required_tag (item_id, tag) VALUES
     ('camera', 'personal:camera'),
     ('camera-battery', 'personal:camera'),
     ('glasses', 'personal:glasses'),
-    ('motion-sickness-medicine', 'activity:long-transfer'),
     ('sunglasses', 'weather:uv-protection'),
     ('umbrella', 'weather:rain'),
-    ('travel-adapter', 'power:plug-mismatch')
+    ('travel-adapter', 'power:plug-mismatch'),
+    ('business-attire', 'purpose:business'),
+    ('laptop', 'purpose:business'),
+    ('thermal-base-layer', 'activity:ski'),
+    ('ski-gloves', 'activity:ski'),
+    ('ski-goggles', 'activity:ski')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO checklist_item_exclude_tag (item_id, tag) VALUES
-    ('swimsuit', 'activity:no-water-activities'),
     ('shampoo', 'lodging:shampoo-provided'),
     ('conditioner', 'lodging:conditioner-provided'),
     ('body-wash', 'lodging:body-wash-provided')
